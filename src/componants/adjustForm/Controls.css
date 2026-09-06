@@ -1,0 +1,11 @@
+/* Ensure spacing between elements */
+.col-auto {
+    margin-right: 15px;
+  }
+  
+  /* Ensure the row stays horizontally aligned */
+  .row {
+    display: flex;
+    justify-content: space-between;
+  }
+  

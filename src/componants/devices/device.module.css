@@ -1,0 +1,86 @@
+.container {
+  position: relative;
+  width: 100%; /* Ensure the container takes full width of the parent */
+  max-width: 1280px;
+}
+
+.card {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  position: relative;
+  /* z-index: 2; */
+  width: 100%; /* Set the card to take the full width of the parent */
+  max-width: none; /* Remove any width constraints */
+  left: 0; /* Remove centering offset */
+}
+
+.card-header {
+  padding-top: 1rem;
+}
+
+.sharedWidth {
+  width: 100%; /* Ensure it takes the full width of its parent container */
+  max-width: 800px; /* Adjust this to your preferred maximum width */
+  margin: 0 auto; /* Center align */
+}
+
+.disabled {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  pointer-events: none;
+}
+
+.enabled {
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.title {
+  font-family: revert-layer;
+  font-size: x-large;
+  text-align: center;
+  margin: 0;
+}
+
+.imageContainer {
+  position: relative;
+  text-align: center;
+}
+
+.deviceImage {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  opacity: 0.5;
+}
+
+.currentSpeedContainer {
+  background-color: #f0f0f0;
+  border: 2px solid #a9a9a9;
+  padding: 5px 10px;
+  color: black;
+  font-size: 36px;
+  font-family: fantasy;
+  transform: translateX(0); /* Remove offset */
+  border-radius: 20px; /* Keep consistent roundness */
+  position: relative;
+  top: auto; /* Remove hardcoded positioning */
+  width: auto; /* Allow it to size dynamically */
+  z-index: 1;
+}
+
+.boldText {
+  font-weight: bold;
+}
+
+.fullWidth {
+  width: 100% !important; /* Force full width */
+  flex: 1; /* Ensure it grows to fill the space */
+}

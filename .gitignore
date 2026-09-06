@@ -21,3 +21,14 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# backup archives / snapshots
+New folder (2)/
+*.rar
+*.zip
+
+# python + runtime artifacts
+__pycache__/
+*.pyc
+uploads/
+uploaded_images/

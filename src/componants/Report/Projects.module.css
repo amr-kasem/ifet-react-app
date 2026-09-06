@@ -1,0 +1,19 @@
+.projectsContainer {
+    padding: 20px;
+  }
+  
+  .projectsTable {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .projectsTable th, .projectsTable td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+  
+  .projectsTable th {
+    background-color: #f2f2f2;
+    text-align: left;
+  }
+  

@@ -1,0 +1,45 @@
+
+.on {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    background-color: #dc3545;
+    /* background-color: #28a745; */
+}
+
+.off {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    /* background-color: #dc3545; */
+    background-color: #28a745;
+}
+
+
+.onManual {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    /* background-color: #28a745; */
+    background-color: #dc3545;
+    cursor: pointer;
+}
+
+.offManual {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    /* background-color: #dc3545; */
+    background-color: #28a745;
+    cursor: pointer;
+}
+
+.input-group-btn {
+    width: 1%;
+    white-space: nowrap;
+}
+.toggle-handle{
+    background-color: #e9ecef;
+}

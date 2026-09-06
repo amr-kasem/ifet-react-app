@@ -1,0 +1,36 @@
+.container {
+    display: flex;
+    flex-direction: row; /* Arrange items vertically */
+    height: calc(100vh - 6vh); /* Full viewport height */
+    gap: 20px; /* Space between ValvesCommon and Devices sections */
+    padding: 20px; /* Optional padding around the container */
+    background-color: #f5f5f5; /* Optional background for aesthetics */
+  }
+  
+  .valvesSection {
+    background-color: #ffffff; /* Background for Valves section */
+    padding: 10px; /* Add padding inside the section */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    border-radius: 10px; /* Rounded corners */
+    overflow: hidden; /* Ensure content stays within bounds */
+  }
+  
+  .devicesSection {
+    flex: 1; /* Let Devices section take up the remaining vertical space */
+    background-color: #ffffff; /* Background for Devices section */
+    padding: 10px; /* Add padding inside the section */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    border-radius: 10px; /* Rounded corners */
+    overflow-y: auto; /* Enable vertical scrolling if needed */
+  }
+
+.sensorsSummary{
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: rgba(0, 0, 0, 0.3) 0px 0px 10px;
+  background-color: white;
+  border-radius: 10px;
+  margin: 120px 20px -100px 20px;
+  padding: 10px;
+}
+  

@@ -1,0 +1,52 @@
+.mainContainer {
+    display: inline-block;
+    width: 250px;
+    height: 50px;
+    border-radius: 100px;
+    background-color: #4d4d4d;
+    position: relative;
+  }
+  
+  .switch {
+    height: 44px;
+    width: 80px;
+    border-radius: 100px;
+    position: absolute;
+    top: 3px;
+    transition: left 0.2s ease-in;
+    background-color: white;
+  }
+  
+  .radio {
+    display: none;
+  }
+  
+  .leftLabel,
+  .centerLabel,
+  .rightLabel {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    width: 80px;
+    border-radius: 100px;
+  }
+  
+  .leftLabel {
+    left: 3px;
+  }
+  
+  .centerLabel {
+    left: 85px;
+  }
+  
+  .rightLabel {
+    left: 167px;
+  }
+
+  .disabled {
+    opacity: 0.5; /* Makes the element appear dimmed */
+    pointer-events: none; /* Prevents interaction */
+  }
+  

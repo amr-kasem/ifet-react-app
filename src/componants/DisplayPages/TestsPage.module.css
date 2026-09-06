@@ -1,0 +1,192 @@
+.container {
+  padding: 24px;
+  background: #f9fafb;
+  min-height: 100vh;
+}
+
+.breadcrumb {
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #64748b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.breadcrumbLink {
+  background: none;
+  border: none;
+  color: #4a90e2;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: inherit;
+  transition: all 0.2s ease;
+}
+
+.breadcrumbLink:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.heading {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.heading::before {
+  content: "🧪";
+  font-size: 1.5rem;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.filterLabel {
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+  display: block;
+  font-size: 0.9rem;
+}
+
+.filterSelect {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 0.95rem;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.filterSelect:focus {
+  border-color: #f59e0b;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.clickableRow {
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.clickableRow:hover {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  transform: translateY(-1px);
+}
+
+.statusBadge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusCompleted {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusPending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.capitalize {
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.disabledRow {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  background-color: #f8f9fa;
+}
+
+.disabledRow:hover {
+  background-color: #f8f9fa !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.trialsCount {
+  color: #059669;
+  font-weight: 600;
+}
+
+.noTrials {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.button {
+  padding: 0.5rem 1.5rem;
+  background-color: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
+  margin: 15px;
+}
+
+.button:hover,
+.button:focus {
+  background-color: #1565c0;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15);
+  outline: none;
+}
+
+.button:active {
+  background-color: #0d47a1;
+}

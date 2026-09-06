@@ -1,0 +1,31 @@
+.devicesContainer {
+  display: flex; /* Flexbox layout */
+  flex-direction: column; /* Arrange items vertically */
+  gap: 20px; /* Space between each device */
+  padding: 20px; /* Optional padding for spacing */
+  background-color: #f9f9f9; /* Optional background color */
+  overflow-y: auto; /* Enable vertical scrolling if needed */
+  height: 100%; /* Ensure it takes up the full available height */
+  position: relative; /* Add relative positioning to contain the absolute positioning of devicesDisable */
+  margin-top: 100px;
+}
+
+.devicesDisable {
+  position: absolute;
+  width: 100%;
+  background-color: darkgrey;
+  z-index: 1000;
+  height: 98%;
+  opacity: 0.5;
+}
+
+.deviceWrapper {
+  flex: 0 0 auto; /* Ensure each device stays in its own space */
+  width: 100%; /* Make each device take up full width of the container */
+  display: flex;
+  justify-content: center; /* Center the device inside the wrapper horizontally */
+  align-items: center; /* Align items vertically in the middle */
+  background-color: #ffffff; /* Optional background for device wrapper */
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+  border-radius: 10px; /* Rounded corners for a modern look */
+}

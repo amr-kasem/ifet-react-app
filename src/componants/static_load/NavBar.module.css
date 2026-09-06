@@ -1,0 +1,67 @@
+.navbar {
+  background-color: #212529;
+  color: #fff;
+  padding: 0.5rem 1.5rem;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1100;
+  box-shadow: 0 2px 8px rgba(49, 46, 129, 0.08);
+  display: flex;
+  align-items: center;
+  height: 100px;
+}
+
+.containerFluid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: 1px;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  margin-right: 8px;
+  border-radius: 6px;
+  background: #fff;
+  object-fit: contain;
+  box-shadow: 0 1px 4px rgba(49, 46, 129, 0.10);
+}
+
+.projectsButton {
+    padding: 0.4rem 1.2rem;
+    background-color: #ff8c00;
+    color: black;
+    border: dotted;
+    border-radius: 6px;
+    font-size: 1.3rem;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+    transition: background 0.2s, box-shadow 0.2s;
+    margin-right: 16px;
+    right: 380px;
+    position: absolute;
+    height: 75px;
+}
+
+.projectsButton:hover,
+.projectsButton:focus {
+  background-color: #ab5f04; /* solid purple */
+  color: white;              /* change text color for contrast */
+  outline: none;
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4); /* stronger purple shadow */
+  border-color: transparent; /* remove dotted border on hover for cleaner look */
+}

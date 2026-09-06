@@ -1,0 +1,13 @@
+(emergency stop)
+omda payload sended:  "" at topic: device1/emergency_stop
+
+(finish)
+http://localhost:8000/projects/9/cyclic_tests/1/finish
+
+
+
+we have a button that start / emergancy stop test
+i need when it (emergancy stop) onlyyy
+separate it to 2 buttons
+1. the old one as it is at the right side
+2. a new button at the left side console log "testOmda"

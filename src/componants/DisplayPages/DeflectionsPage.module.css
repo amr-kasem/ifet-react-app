@@ -1,0 +1,111 @@
+.container {
+  padding: 24px;
+  background: #f9fafb;
+  min-height: 100vh;
+}
+
+.breadcrumb {
+  margin-bottom: 24px;
+  padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #64748b; /* softer gray */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.breadcrumbLink {
+  background: none;
+  border: none;
+  color: #8b5cf6; /* purple accent */
+  text-decoration: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: inherit;
+  transition: all 0.2s ease;
+}
+
+.breadcrumbLink:hover {
+  background: #f3e8ff;
+  color: #7c3aed;
+}
+
+.heading {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #1e293b; /* dark slate */
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.table th {
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #5cb379 0%, #164e0b 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: left;
+}
+
+.table td {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.table tr:hover {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+.noData {
+  text-align: center;
+  color: #64748b;
+  padding: 40px 20px;
+  font-size: 1.1rem;
+  font-style: italic;
+}
+
+.button {
+  padding: 0.5rem 1.5rem;
+  background-color: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
+  margin: 15px;
+}
+
+.button:hover,
+.button:focus {
+  background-color: #1565c0;
+  box-shadow: 0 4px 16px rgba(25, 118, 210, 0.15);
+  outline: none;
+}
+
+.button:active {
+  background-color: #0d47a1;
+}

@@ -1,0 +1,51 @@
+.valvesContainer {
+    width: 360px; /* Fixed width for consistent layout */
+    background-color: #f9f9f9; /* Light background for visibility */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    /* border-radius: 8px; 
+    padding: 20px;  */
+  }
+  
+  .valvesTable {
+    font-size: 14px; /* Make the table font more compact */
+    margin: 0; /* Remove margin around the table */
+  }
+  
+  .valvesContainer h4 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #333; /* Slightly darker text color */
+  }
+  
+  .offManual {
+    width: 20px;
+    height: 20px;
+    background-color: green;
+    cursor: pointer;
+    margin: auto;
+  }
+  
+  .onManual {
+    width: 20px;
+    height: 20px;
+    background-color: red;
+    cursor: pointer;
+    margin: auto;
+  }
+
+  .syncSpinner {
+    width: 20px;
+    height: 20px;
+    margin: auto;
+    border: 2px solid #ccc;
+    border-top-color: #333;
+    border-radius: 50%;
+    animation: syncSpin 0.8s linear infinite;
+  }
+
+  @keyframes syncSpin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  

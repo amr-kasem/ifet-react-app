@@ -1,0 +1,26 @@
+.tableContainer {
+    width: 100%;
+    position: relative;
+    background: white;
+    padding: 10px 0;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sensorsTable {
+    width: 80%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    border: 2px solid black;
+  }
+  
+  .sensorsTable th, 
+  .sensorsTable td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .sensorsTable th {
+    background-color: #f4f4f4;
+  }
+  
