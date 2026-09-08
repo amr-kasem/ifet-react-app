@@ -1,0 +1,198 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1500; /* below ImageModal (2000) */
+}
+
+.content {
+  background: #fff;
+  color: #212529;
+  border-radius: 10px;
+  width: min(1150px, 96vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #6c757d;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #555;
+  padding: 0 0.25rem;
+}
+
+.closeButton:hover {
+  color: #000;
+}
+
+.body {
+  overflow: auto;
+  padding: 1rem 1.25rem 0;
+}
+
+.attemptRow {
+  cursor: pointer;
+}
+
+.attemptRow:hover {
+  background-color: #f1f3f5;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.muted {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+
+.verdictPass {
+  color: #146c43;
+  font-weight: 600;
+}
+
+.verdictFail {
+  color: #b02a37;
+  font-weight: 600;
+}
+
+.verdictPending {
+  color: #6c757d;
+}
+
+.shotCell {
+  background: #f8f9fa;
+  text-align: left;
+  padding: 0.85rem 1rem;
+}
+
+.shotHead {
+  background: #e9ecef;
+}
+
+.noShots {
+  margin: 0;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.shotPass {
+  color: #146c43;
+  font-weight: 600;
+}
+
+.shotFail {
+  color: #b02a37;
+  font-weight: 600;
+}
+
+.noteCell {
+  white-space: normal;
+  word-break: break-word;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  justify-content: center;
+}
+
+.thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  cursor: zoom-in;
+  background: #e9ecef;
+}
+
+.thumb:hover {
+  border-color: #0d6efd;
+}
+
+.attemptPhotos {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.attemptPhotosLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.attemptNote {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+}
+
+.footnote {
+  margin: 0;
+  padding: 0.7rem 1.25rem;
+  border-top: 1px solid #e3e3e3;
+  font-size: 0.78rem;
+  color: #6c757d;
+}
+
+/* No URL is exposed for a stored photograph yet, so name it rather than
+   render a broken image. */
+.photoStub {
+  display: inline-block;
+  max-width: 100px;
+  padding: 0.15rem 0.4rem;
+  border: 1px dashed #adb5bd;
+  border-radius: 4px;
+  background: #f1f3f5;
+  color: #495057;
+  font-size: 0.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.error {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid #f5c2c7;
+  background: #f8d7da;
+  color: #842029;
+  font-size: 0.85rem;
+}

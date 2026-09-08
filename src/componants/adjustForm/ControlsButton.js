@@ -14,6 +14,7 @@ const ControlsButton = ({
   cyclic_test_index,
   setButtonName,
   setButtonClass,
+  isImpact,
 }) => {
   // console.log("checking button" , "disabled = ",disabled , "selectedSensor = ", selectedSensor)
   // console.log("CANCEL test",project_id)
@@ -28,7 +29,9 @@ const ControlsButton = ({
           id="startBtn1"
           onClick={handleStartBtn}
           disabled={
-            customPresetToggle === "Custom" // Ignore disabled if "Custom"
+            isImpact // Impact tests pick no sensor, so that gate does not apply
+              ? disabled
+              : customPresetToggle === "Custom" // Ignore disabled if "Custom"
               ? buttonName === "Start" &&
                 (status !== "idle" || selectedSensor === 0)
               : disabled || selectedSensor === 0 // Include the disabled prop in the condition otherwise

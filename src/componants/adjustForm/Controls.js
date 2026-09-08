@@ -388,6 +388,7 @@ const Controls = ({
   const customCyclicRows = neededDevice.customCyclicRows || [];
   const presetStaticRows = neededDevice.presetStaticRows || [];
   const customStaticRows = neededDevice.customStaticRows || [];
+  const impactRows = neededDevice.impactRows || [];
 
   const [selectedTestCyclicIndex, setSelectedTestCyclicIndex] = useState(null);
 
@@ -478,6 +479,7 @@ const Controls = ({
     neededDevice.customCyclicRows,
     neededDevice.presetStaticRows,
     neededDevice.presetCyclicRows,
+    neededDevice.impactRows,
   ]);
 
   const handleTestSelection = (event, handleTableEditChanges) => {
@@ -510,6 +512,16 @@ const Controls = ({
     }
 
     console.log("selected is ", selectedValue);
+
+    if (toggle === "impact") {
+      // Impact tests are addressed by test_id, not by an ordinal index.
+      const row = impactRows.find((r) => r.id === selectedValue);
+      setTestID(row ? row.id : null);
+      setButtonName("Start");
+      setButtonClass("btn btn-success btn-lg");
+      return;
+    }
+
     if (toggle === "dynamic_load") {
       if (custom_preset_toggle === "Preset") {
         // For preset cyclic tests, we only allow the next unfinished test
@@ -650,6 +662,36 @@ const Controls = ({
   const renderDropdownOptions = () => {
     const options = [];
 
+    if (toggle === "impact") {
+      // The impact API has no preset/custom split, so the toggle beside this
+      // dropdown does not filter these - every open test is listed either way.
+      // An attempt cannot be started on a finished test, so those are dropped.
+      const available = impactRows.filter((row) => !row.finished);
+
+      if (available.length > 0) {
+        available.forEach((row) => {
+          // Tests carry no labos id of their own - that is on each attempt.
+          const label = row.missile
+            ? `Impact test ${row.id} — ${row.missile}`
+            : `Impact test ${row.id}`;
+          const attempts = (row.trials || []).length;
+          options.push(
+            <option key={row.id} value={row.id}>
+              {attempts > 0 ? `${label} (${attempts} attempts)` : label}
+            </option>
+          );
+        });
+      } else {
+        options.push(
+          <option key="no-impact" disabled>
+            No Open Impact Tests
+          </option>
+        );
+      }
+
+      return options;
+    }
+
     if (custom_preset_toggle === "Preset") {
       if (toggle === "dynamic_load") {
         if (nextUnfinishedTest) {
@@ -764,7 +806,9 @@ const Controls = ({
           disabled={status !== "idle"}
         >
           <option value="" disabled>
-            {custom_preset_toggle === "Preset"
+            {toggle === "impact"
+              ? "Available Impact Tests"
+              : custom_preset_toggle === "Preset"
               ? "Available Preset Tests"
               : "Available Custom Tests"}
           </option>
@@ -793,6 +837,7 @@ const Controls = ({
           cyclic_test_index={selectedTestCyclicIndex}
           setButtonName={setButtonName}
           setButtonClass={setButtonClass}
+          isImpact={toggle === "impact"}
         />
       </div>
     </div>

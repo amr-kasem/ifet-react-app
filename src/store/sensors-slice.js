@@ -197,6 +197,14 @@ const deviceSlice = createSlice({
       });
     },
 
+    readImpactRows(state, action) {
+      state.devices.forEach((device) => {
+        if (action.payload.deviceID === device.deviceID) {
+          device.impactRows = action.payload.rows;
+        }
+      });
+    },
+
     readDisable(state, action) {
       state.devices.forEach((device) => {
         if (action.payload.deviceID === device.deviceID) {
@@ -652,6 +660,7 @@ addCustomCyclicRow(state, action) {
         customCyclicRows: [],
         presetStaticRows: [],
         presetCyclicRows: [],
+        impactRows: [],
 
 
       }));

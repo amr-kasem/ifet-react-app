@@ -1,0 +1,47 @@
+.emptyRow {
+  padding: 1.5rem 0;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.wrapCell {
+  white-space: normal;
+  word-break: break-word;
+}
+
+.verdictPass {
+  color: #146c43;
+  font-weight: 600;
+}
+
+.verdictFail {
+  color: #b02a37;
+  font-weight: 600;
+}
+
+.verdictPending {
+  color: #6c757d;
+}
+
+.error {
+  position: relative;
+  margin-top: 0.75rem;
+  padding: 0.65rem 2rem 0.65rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #f5c2c7;
+  background: #f8d7da;
+  color: #842029;
+  font-size: 0.9rem;
+}
+
+.errorClose {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.4rem;
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: #842029;
+  cursor: pointer;
+}

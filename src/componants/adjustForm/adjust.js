@@ -12,6 +12,12 @@ import ConfirmationModal from "../Modals/ConfirmationModal";
 import axios from "axios";
 import AddRowStaticPressureLoadingModal from "../Modals/AddRowStaticPressureLoadingModal";
 import AddRowCyclicPressureLoadingModal from "../Modals/AddRowCyclicPressureLoadingModal";
+import ImpactPanel from "../impact/ImpactPanel";
+import {
+  impactError,
+  listImpactTests,
+  startImpactAttempt,
+} from "../impact/impactApi";
 
 const Adjust = (props) => {
   const dispatch = useDispatch();
@@ -37,6 +43,17 @@ const Adjust = (props) => {
   const [testID, setTestID] = useState(0);
   const [testIndex, setTestIndex] = useState(0);
   const [FinishModalVisible, setFinishModalVisible] = useState(false);
+  const [impactAttempt, setImpactAttempt] = useState(null);
+  const [impactStartError, setImpactStartError] = useState("");
+  // A declared name, not a login. Remembered per device, as the API asks.
+  const [operatorName, setOperatorName] = useState(
+    () => localStorage.getItem(`impact_operator_${props.deviceID}`) || ""
+  );
+
+  useEffect(() => {
+    if (!operatorName) return;
+    localStorage.setItem(`impact_operator_${props.deviceID}`, operatorName);
+  }, [operatorName, props.deviceID]);
 
   const [showAddRowModal, setShowAddRowModal] = useState(false);
   const [modalType, setModalType] = useState(null); // 'static' or 'cyclic'
@@ -166,6 +183,38 @@ const Adjust = (props) => {
         !isNaN(newRowData.cycles);
 
   let toggleState = neededDevice.toggle;
+  const isImpact = toggleState === "impact";
+
+  // Impact tests come from the impact API (the simulation in sync_test_api.py
+  // for now), not from the project payload the other modes use.
+  const loadImpactTests = async () => {
+    if (!props.projectID) return;
+    try {
+      const rows = await listImpactTests(props.projectID);
+      dispatch(devicesActions.readImpactRows({ deviceID, rows }));
+    } catch (error) {
+      console.error("Could not load impact tests", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!isImpact) return;
+    loadImpactTests();
+  }, [isImpact, deviceID, props.projectID]);
+
+  // Changing test, or leaving impact mode, drops the attempt being worked on.
+  useEffect(() => {
+    setImpactAttempt(null);
+  }, [isImpact, selectedTest]);
+
+  // Success/Fail closes the test, so hand the button back to "Start".
+  // The attempt is closed (completed or aborted) - hand the button back and
+  // refresh the list so the table and dropdown agree.
+  const handleImpactAttemptClosed = () => {
+    setButtonName("Start");
+    setButtonClass("btn btn-success btn-lg");
+    loadImpactTests();
+  };
   const prevStatusRef = useRef(null); // Initialize to null to detect initial load
   const isInitialLoadRef = useRef(true); // Track if this is the initial load
 
@@ -317,13 +366,40 @@ const Adjust = (props) => {
     if (
       (buttonName === "Start" || buttonName === "Resume") &&
       !waitingRef.current &&
-      cont
+      cont &&
+      !isImpact // impact tests select no sensors, so go straight to Start
     ) {
       // Enable CommonSensorsTable and unhide Done button
       dispatch(generalActions.setCommonSensorsTableDisable({ value: false }));
       dispatch(generalActions.setStartAfterSensorSelection({ value: false }));
       dispatch(generalActions.setDevicesDisabled({ value: false }));
       waitingRef.current = true;
+      return;
+    }
+
+    // Impact never touches the rig - no VFD, no valves, no pressure, no MQTT.
+    // It starts an attempt over HTTP, so it returns before any rig publishing.
+    if (isImpact) {
+      if (buttonName !== "Start") return;
+
+      const testId = selectedTest;
+      if (!testId) return;
+
+      setButtonName("Emergency Stop");
+      setButtonClass("btn btn-danger btn-lg");
+
+      startImpactAttempt(props.projectID, testId, operatorName || null)
+        .then((attempt) => {
+          setImpactAttempt(attempt);
+          setImpactStartError("");
+          loadImpactTests(); // so the table shows the attempt straight away
+        })
+        .catch((error) => {
+          // e.g. an attempt on a test already marked finished.
+          setImpactStartError(impactError(error, "Could not start the attempt."));
+          setButtonName("Start");
+          setButtonClass("btn btn-success btn-lg");
+        });
       return;
     }
 
@@ -796,106 +872,112 @@ const Adjust = (props) => {
       <div className="col-8">
         <div className="card text-white bg-dark">
           <div className="card-body">
-            <label className="form-label">
-              <b>Frequency:</b>
-              <i id="sliderValue">{sliderValue}</i>
-            </label>
-            <div className="input-group  d-flex">
-              <button
-                className="btn btn-light"
-                disabled={
-                  buttonName !== "Emergency Stop" ||
-                  (status !== "tuning" &&
-                    !status.includes("Holding") &&
-                    !status.includes("Cycle"))
-                }
-                type="button"
-                onClick={() => handleMinus(3)}
-                id="minusMinusButton"
-              >
-                --
-              </button>
-              <button
-                className="btn btn-light"
-                disabled={
-                  buttonName !== "Emergency Stop" ||
-                  (status !== "tuning" &&
-                    !status.includes("Holding") &&
-                    !status.includes("Cycle"))
-                }
-                type="button"
-                onClick={() => handleMinus(0.5)}
-                id="minusButton"
-              >
-                -
-              </button>
-              <div className="border-top border-bottom border-white flex-grow-1 pt-2">
-                <input
+            {/* Impact runs no motor, so the frequency slider,
+                current-speed readout and their rule are hidden for it. */}
+            {!isImpact && (
+              <>
+              <label className="form-label">
+                <b>Frequency:</b>
+                <i id="sliderValue">{sliderValue}</i>
+              </label>
+              <div className="input-group  d-flex">
+                <button
+                  className="btn btn-light"
                   disabled={
-                    // buttonName !== "Emergency Stop" || (status !== "tuning" && !status.includes("Holding"))
                     buttonName !== "Emergency Stop" ||
                     (status !== "tuning" &&
                       !status.includes("Holding") &&
                       !status.includes("Cycle"))
                   }
-                  type="range"
-                  className="form-range"
-                  min="0"
-                  max="60"
-                  step="0.01"
-                  value={sliderValue}
-                  // onChange={(e) => setSliderValue(parseFloat(e.target.value))}
-                  onChange={(e) => {
-                    setSliderValue(parseFloat(e.target.value));
-                    setIsSliderChanged(true); // Track that the user changed the slider manually
-                  }}
-                  id="rangeSlider"
-                />
+                  type="button"
+                  onClick={() => handleMinus(3)}
+                  id="minusMinusButton"
+                >
+                  --
+                </button>
+                <button
+                  className="btn btn-light"
+                  disabled={
+                    buttonName !== "Emergency Stop" ||
+                    (status !== "tuning" &&
+                      !status.includes("Holding") &&
+                      !status.includes("Cycle"))
+                  }
+                  type="button"
+                  onClick={() => handleMinus(0.5)}
+                  id="minusButton"
+                >
+                  -
+                </button>
+                <div className="border-top border-bottom border-white flex-grow-1 pt-2">
+                  <input
+                    disabled={
+                      // buttonName !== "Emergency Stop" || (status !== "tuning" && !status.includes("Holding"))
+                      buttonName !== "Emergency Stop" ||
+                      (status !== "tuning" &&
+                        !status.includes("Holding") &&
+                        !status.includes("Cycle"))
+                    }
+                    type="range"
+                    className="form-range"
+                    min="0"
+                    max="60"
+                    step="0.01"
+                    value={sliderValue}
+                    // onChange={(e) => setSliderValue(parseFloat(e.target.value))}
+                    onChange={(e) => {
+                      setSliderValue(parseFloat(e.target.value));
+                      setIsSliderChanged(true); // Track that the user changed the slider manually
+                    }}
+                    id="rangeSlider"
+                  />
+                </div>
+                <button
+                  className="btn btn-light"
+                  disabled={
+                    buttonName !== "Emergency Stop" ||
+                    (status !== "tuning" &&
+                      !status.includes("Holding") &&
+                      !status.includes("Cycle"))
+                  }
+                  type="button"
+                  onClick={() => handlePlus(0.5)}
+                  id="plusButton"
+                >
+                  +
+                </button>
+                <button
+                  className="btn btn-light"
+                  disabled={
+                    buttonName !== "Emergency Stop" ||
+                    (status !== "tuning" &&
+                      !status.includes("Holding") &&
+                      !status.includes("Cycle"))
+                  }
+                  type="button"
+                  onClick={() => handlePlus(3)}
+                  id="plusPlusButton"
+                >
+                  ++
+                </button>
               </div>
-              <button
-                className="btn btn-light"
-                disabled={
-                  buttonName !== "Emergency Stop" ||
-                  (status !== "tuning" &&
-                    !status.includes("Holding") &&
-                    !status.includes("Cycle"))
-                }
-                type="button"
-                onClick={() => handlePlus(0.5)}
-                id="plusButton"
-              >
-                +
-              </button>
-              <button
-                className="btn btn-light"
-                disabled={
-                  buttonName !== "Emergency Stop" ||
-                  (status !== "tuning" &&
-                    !status.includes("Holding") &&
-                    !status.includes("Cycle"))
-                }
-                type="button"
-                onClick={() => handlePlus(3)}
-                id="plusPlusButton"
-              >
-                ++
-              </button>
-            </div>
-            <br />
-            <div className="row">
-              <p>
-                <span
-                  className="led led-on"
-                  id="currentSpeed_led"
-                  style={{
-                    verticalAlign: "text-bottom",
-                  }}
-                ></span>
-                <b>Current Speed:</b>
-                <i id="currentSpeed">{current_speed}</i>
-              </p>
-            </div>
-            <hr />
+              <br />
+              <div className="row">
+                <p>
+                  <span
+                    className="led led-on"
+                    id="currentSpeed_led"
+                    style={{
+                      verticalAlign: "text-bottom",
+                    }}
+                  ></span>
+                  <b>Current Speed:</b>
+                  <i id="currentSpeed">{current_speed}</i>
+                </p>
+              </div>
+              <hr />
+              </>
+            )}
 
             {toggleState == "static_load" ? (
               <StaticAdjust
@@ -951,6 +1033,21 @@ const Adjust = (props) => {
               setSelectedTest={setSelectedTest}
               onAddCustomRow={handleAddCustomRow} // Add this prop
             />
+
+            {isImpact && (
+              <>
+                {impactStartError && (
+                  <p className="text-danger mt-2 mb-0">{impactStartError}</p>
+                )}
+                <ImpactPanel
+                  attempt={impactAttempt}
+                  setAttempt={setImpactAttempt}
+                  operatorName={operatorName}
+                  setOperatorName={setOperatorName}
+                  onAttemptClosed={handleImpactAttemptClosed}
+                />
+              </>
+            )}
           </div>
         </div>
       </div>

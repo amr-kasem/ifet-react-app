@@ -1,6 +1,7 @@
 import CyclicPressureTable from "./CyclicPressureTable";
 import CyclicStaticHeader from "./CyclicStaticHeader";
 import StaticPressureTable from "./StaticPressureTable";
+import ImpactTestsTable from "../impact/ImpactTestsTable";
 import { useState } from "react";
 
 const CyclicStaticPressureTable = ({
@@ -13,11 +14,21 @@ const CyclicStaticPressureTable = ({
   clicked,
   projectID,
   setProjectData,
-  // status,
+  status,
 }) => {
   // console.log("toggle", toggle);
   const [isEditableCyclic, setIsEditableCyclic] = useState(false);
   const [isEditableStatic, setIsEditableStatic] = useState(false);
+
+  if (toggle === "impact") {
+    return (
+      <ImpactTestsTable
+        projectID={projectID}
+        neededDevice={neededDevice}
+        status={status}
+      />
+    );
+  }
 
   return (
     <>

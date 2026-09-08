@@ -1,0 +1,193 @@
+/* Sits inside the dark device card, so colours assume a dark ground. */
+.panel {
+  margin-top: 1rem;
+}
+
+.resultRow {
+  display: flex;
+  gap: 1rem;
+}
+
+.resultButton {
+  flex: 1;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.divider {
+  margin: 1rem 0;
+  opacity: 0.35;
+}
+
+.uploadRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.uploadButton {
+  flex: 1 1 150px;
+}
+
+.progress {
+  margin-top: 0.75rem;
+  height: 1.25rem;
+}
+
+.thumbStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.thumb:hover {
+  transform: scale(1.06);
+  border-color: #fff;
+}
+
+.moreThumbs {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  border: 1px dashed rgba(255, 255, 255, 0.5);
+  background: transparent;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.moreThumbs:hover {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.errorText {
+  margin: 0.75rem 0 0;
+  color: #ff8080;
+  font-size: 0.9rem;
+}
+
+.successText {
+  margin: 0.75rem 0 0;
+  color: #8fe6a4;
+  font-size: 0.9rem;
+}
+
+/* --- operator name ------------------------------------------------------ */
+.operatorRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.85rem;
+}
+
+.operatorLabel {
+  flex: 0 0 auto;
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.operatorRow input {
+  flex: 1 1 auto;
+  max-width: 220px;
+}
+
+.attemptBadge {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+}
+
+/* --- recorded impacts --------------------------------------------------- */
+.shotList {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.shotRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 0.9rem;
+}
+
+.shotNumber {
+  flex: 0 0 2.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.shotPass {
+  flex: 0 0 3.2rem;
+  color: #8fe6a4;
+  font-weight: 600;
+}
+
+.shotFail {
+  flex: 0 0 3.2rem;
+  color: #ff8080;
+  font-weight: 600;
+}
+
+.shotPhotos {
+  flex: 1 1 auto;
+  opacity: 0.7;
+}
+
+.shotAddPhoto {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: transparent;
+  color: #fff;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.55rem;
+  cursor: pointer;
+}
+
+.shotAddPhoto:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.shotAddPhoto:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --- finish ------------------------------------------------------------- */
+.finishRow {
+  margin-top: 0.85rem;
+}
+
+.finishButton {
+  width: 100%;
+  font-weight: 600;
+}

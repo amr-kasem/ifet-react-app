@@ -8,7 +8,7 @@ import DeviceTurboModal from "../Modals/DeviceTurboModal";
 const LOAD_TYPE_OPTIONS = [
   { label: "Static Load", value: "static_load", disabled: false },
   { label: "Cyclic Load", value: "dynamic_load", disabled: false },
-  { label: "Impact", value: "impact", disabled: true },
+  { label: "Impact", value: "impact", disabled: false },
   { label: "Forced Entry", value: "forced_entry", disabled: true },
   { label: "ANSI Z97.1", value: "ansi_z97_1", disabled: true },
 ];
