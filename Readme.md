@@ -62,11 +62,16 @@ Runs the test watcher.
 | Service | Address | Purpose |
 |---|---|---|
 | MQTT over WebSocket | `ws://<hostname>:8084/mqtt` | Live sensor data, valve/VFD commands, device status |
-| REST API | `http://<hostname>:8000` | Devices, projects, test results, trial images, cyclic reports |
+| REST API | `http://<hostname>:8000` | Devices, projects, test results, trial images, cyclic reports, impact tests, `/sync/status` |
 | Config files | `http://<hostname>/config.json` | Device, sensor, valve and VFD definitions |
-| Simulation config server | `http://<hostname>:8001/config.json` | Only for local simulation — see [Local simulation](#local-simulation) |
 
 If any of these is unreachable the UI will load but stay empty or stuck on `connecting ...`.
+
+> **The app must be served from the same origin as the config files** — port 80,
+> which is where the backend's `ui` container serves them. Running the app on
+> another port (`npm start` on 3000, say) makes the three `config*.json` fetches
+> cross-origin, and the `ui` container sends no CORS headers, so they are
+> blocked and no devices appear.
 
 ---
 
@@ -136,6 +141,7 @@ src/
 │   └── testsSlice.js          Test/trial state
 └── componants/
     ├── Mqtt1/                 MQTT client, subscriptions, message routing
+    ├── impact/                Impact panel, tests table, photographs, impact API
     ├── static_load/           Main control dashboard
     ├── adjustForm/            Valve and VFD control panels
     ├── devices/               Device cards and selection
@@ -153,6 +159,124 @@ src/
 ```
 
 Note: `componants` is the actual spelling used throughout the codebase.
+
+---
+
+## Impact tests
+
+Selecting **Impact** in a device's load-type dropdown replaces the pressure
+controls with the manual impact workflow. The frequency slider, current-speed
+readout and the sensor / setpoint / hold-time row are hidden, and the project's
+pressure table is replaced by an **Impact Tests** table.
+
+Impact never touches the rig — no VFD, no valves, no pressure, no MQTT. It is a
+form, so there is no running state to poll.
+
+### The shape of an impact test
+
+```
+impact test  ──trials──►  attempt  ──►  numbered impacts (shots)  ──►  photographs
+```
+
+An impact test is a **sequence**: impact 1, impact 2, impact 3 — each numbered,
+each with its own pass/fail, each with its own photographs. `labos_test_id` is
+stable across every attempt at the same test, which is what lets "attempt 2 of
+the same test" be expressed.
+
+### Operating it
+
+1. **Add Impact Test** in the table. Missile and weight are both optional — the
+   protocol fixes the missile, so a test with neither is valid.
+2. Pick the test in the dropdown, type the **Operator** name, press **Start**.
+   That starts an *attempt*; the operator name is remembered per device.
+3. **Success / Fail** records one impact each. **+ Photos** on any impact row
+   attaches photographs to that impact specifically.
+4. **Upload Images / Upload Folder** attach attempt-level evidence — the
+   specimen before, the overall setup. **Preview** shows everything grouped by
+   where it belongs.
+5. **Finish Attempt** asks whether the specimen resisted, or aborts with a
+   reason. Completing needs at least one impact and at least one photograph;
+   aborting needs neither.
+
+The **History** column opens every attempt at that test, each expandable to its
+numbered impacts.
+
+### Things the UI deliberately does
+
+- **"Completed" next to "Pending" is correct.** `result` is the operator's call
+  at finish; `test_result` is the reviewer's verdict afterwards. Separate
+  columns on purpose — collapsing them would let an operator certify their own
+  work. The operator panel never sends a verdict.
+- **No result is preselected** in the finish dialog. Missing data is never a
+  pass.
+- **`retest_required` renders as "not yet reviewed"** while it is null, never as
+  an unchecked box.
+- **Photographs are append-only** — there is no delete, and they freeze once the
+  attempt has been reviewed.
+- **Zero photographs on an impact is normal.** Only the attempt as a whole needs
+  at least one.
+- **API `detail` strings are shown as-is**, because they say what to do next.
+- The **Custom/Preset toggle does not apply to impact** — the API has no such
+  split, so every open test is listed either way.
+
+### Backend
+
+These routes live on the real backend (port 8000) and are documented in
+[real_backend/MANUAL_TESTS_API.md](real_backend/MANUAL_TESTS_API.md):
+
+| Route | |
+|---|---|
+| `GET,POST /projects/{pid}/impact-tests/` | list / create a test |
+| `PUT /projects/{pid}/impact-tests/{id}/finish` | close the test |
+| `GET,POST /projects/{pid}/impact-tests/{id}/trials` | list / start an attempt |
+| `GET,POST /test-results/{aid}/shots` | list / record one impact |
+| `POST /shots/{sid}/photos` | photograph one impact |
+| `POST /test-results/{aid}/photos` | attempt-level evidence |
+| `PUT /test-results/{aid}/finish` | complete or abort the attempt |
+| `PUT /test-results/{aid}/verdict` | the reviewer's call (not sent by this UI) |
+
+They are served by the `feature/labos-airtable` branch of `ifet-management`.
+Earlier branches do not have them, and the older `missile-impact-tests` routes
+are a different model — shots hang off the test with no attempt layer.
+
+> **Photographs upload but cannot be displayed.** The API stores each file under
+> a generated uuid and keeps that in the model's `path` column, but
+> `PhotoSchema` returns only `id`, `filename` (the *original* upload name),
+> `note`, `created_at` and `shot_id`, and there is no GET route for a photo.
+> `/uploads/<uuid>.png` serves the file, but nothing in the response says what
+> the uuid is. The gallery therefore lists photographs by name instead of
+> showing them. `impactPhotoUrl` in
+> [impactApi.js](src/componants/impact/impactApi.js) resolves as soon as the API
+> exposes `url`, `path` or `stored_filename`.
+
+Not yet built **in the UI**: **Forced Entry** and **ANSI Z97.1**. The backend
+serves their `manual-tests` routes; both remain disabled in the load-type
+dropdown.
+
+---
+
+## Sync LED
+
+The **Sync** cell in the header polls `GET /sync/status` every second — the
+backend's Airtable outbox health, not a rig signal. The response carries a
+purpose-built `led` field:
+
+| `led` | Shown | `status` |
+|---|---|---|
+| `green` | green | `Synced` — nothing open, nothing failed |
+| `amber` | amber | `Pending` — queued; testing continues normally |
+| `red` | red | `Sync Failed` or `Retry Required` |
+
+Hovering shows the `status` word. A spinner means the endpoint could not be
+reached. The soft reload of cached config now fires when `revision` changes —
+the signal that a pull brought new data down. The previous endpoint was a bare
+`0`/`1` test stub with no equivalent, so it reloaded whenever the LED went red;
+if that behaviour is wanted back, it is a few lines in
+[ValvesCommon.js](src/componants/Status/ValvesCommon.js).
+
+Note that `led: "red"` with `worker_alive: false` is expected whenever
+`AIRTABLE_SYNC_ENABLED=false` — the worker has no heartbeat because it is not
+meant to be running.
 
 ---
 
