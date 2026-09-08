@@ -6,16 +6,20 @@ import axios from "axios";
 import { reloadBootstrapData } from "../../store/sensors-slice";
 import { generalActions } from "../../store/general-slice";
 
-// Test Sync API (sync_test_api.py on port 8010). Change later to real backend path.
-const SYNC_API_URL = `http://${window.location.hostname}:8010/sync`;
+// The backend's Airtable sync health. It returns a purpose-built `led` field
+// ("green" | "amber" | "red") plus `status`, one of the four contractual words
+// Synced / Pending / Sync Failed / Retry Required.
+const SYNC_API_URL = `http://${window.location.hostname}:8000/sync/status`;
 
 const ValvesCommon = () => {
   const dispatch = useDispatch();
   const ref3 = useRef();
   const commonValves = useSelector((state) => state.devices["commonValves"]);
-  // null = loading/failed fetch, 0 = red, 1 = green
+  // null = loading/failed fetch, otherwise "green" | "amber" | "red"
   const [syncValue, setSyncValue] = useState(null);
-  const reloadedForZeroRef = useRef(false);
+  const [syncStatus, setSyncStatus] = useState("");
+  // The revision the app data was last reloaded for.
+  const reloadedRevisionRef = useRef(null);
   const isReloadingRef = useRef(false);
 
   console.log("check valves => commonValves = ", commonValves);
@@ -24,11 +28,10 @@ const ValvesCommon = () => {
     let isMounted = true;
 
     const softReloadAppData = async () => {
-      if (isReloadingRef.current || reloadedForZeroRef.current) {
+      if (isReloadingRef.current) {
         return;
       }
 
-      reloadedForZeroRef.current = true;
       isReloadingRef.current = true;
 
       try {
@@ -41,25 +44,30 @@ const ValvesCommon = () => {
 
     const fetchSync = async () => {
       try {
-        const response = await axios.get(SYNC_API_URL);
-        const value = Number(response.data);
+        const { data } = await axios.get(SYNC_API_URL);
 
         if (!isMounted) {
           return;
         }
 
-        if (value !== 0 && value !== 1) {
+        const led = data?.led;
+        if (led !== "green" && led !== "amber" && led !== "red") {
           setSyncValue(null);
           return;
         }
 
-        setSyncValue(value);
+        setSyncValue(led);
+        setSyncStatus(data.status || "");
 
-        if (value === 0) {
+        // `revision` moves when a pull brought new data down, which is the
+        // signal the app's cached config is stale. The old 0/1 endpoint had no
+        // equivalent, so it reloaded whenever the LED went red instead.
+        const revision = data.revision ?? null;
+        if (reloadedRevisionRef.current === null) {
+          reloadedRevisionRef.current = revision;
+        } else if (revision !== reloadedRevisionRef.current) {
+          reloadedRevisionRef.current = revision;
           softReloadAppData();
-        } else {
-          // Sync back to 1 — allow next 0 to trigger another soft reload
-          reloadedForZeroRef.current = false;
         }
       } catch (error) {
         if (isMounted) {
@@ -142,9 +150,15 @@ const ValvesCommon = () => {
                 ) : (
                   <div
                     className={
-                      syncValue === 1 ? classes.offManual : classes.onManual
+                      syncValue === "green"
+                        ? classes.offManual
+                        : syncValue === "amber"
+                        ? classes.syncAmber
+                        : classes.onManual
                     }
                     style={{ cursor: "default" }}
+                    title={syncStatus}
+                    aria-label={`Sync: ${syncStatus || syncValue}`}
                   />
                 )}
               </td>

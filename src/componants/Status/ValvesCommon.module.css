@@ -49,3 +49,12 @@
     }
   }
   
+  /* Amber: work is queued and testing continues normally. A third state the
+     old 0/1 sync endpoint could not express. */
+  .syncAmber {
+    width: 20px;
+    height: 20px;
+    background-color: #ffc107;
+    cursor: default;
+    margin: auto;
+  }
