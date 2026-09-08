@@ -32,3 +32,6 @@ __pycache__/
 *.pyc
 uploads/
 uploaded_images/
+
+# local reference copy of the backend's internal API docs - not ours to publish
+real_backend/

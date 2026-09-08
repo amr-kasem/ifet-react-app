@@ -221,8 +221,8 @@ numbered impacts.
 
 ### Backend
 
-These routes live on the real backend (port 8000) and are documented in
-[real_backend/MANUAL_TESTS_API.md](real_backend/MANUAL_TESTS_API.md):
+These routes live on the real backend (port 8000). The authoritative contract is
+that service's own `openapi.json`, or `/docs` on a running instance:
 
 | Route | |
 |---|---|
@@ -238,6 +238,10 @@ These routes live on the real backend (port 8000) and are documented in
 They are served by the `feature/labos-airtable` branch of `ifet-management`.
 Earlier branches do not have them, and the older `missile-impact-tests` routes
 are a different model — shots hang off the test with no attempt layer.
+
+Two field placements are easy to get wrong: `labos_test_id` is on the **attempt**,
+not the test, and an attempt does **not** embed its impacts — those come from
+`GET /test-results/{aid}/shots`.
 
 > **Photographs upload but cannot be displayed.** The API stores each file under
 > a generated uuid and keeps that in the model's `path` column, but
