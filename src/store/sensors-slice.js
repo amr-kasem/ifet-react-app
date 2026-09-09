@@ -5,8 +5,8 @@ import axios from "axios";
 export const fetchDeviceData = createAsyncThunk(
   "devices/fetchDeviceData",
   async () => {
-    // const response = await fetch(`http://${window.location.host}/config.json`); //user
-    const response = await fetch(`http://${window.location.hostname}/config.json`); //me
+    const response = await fetch(`http://${window.location.host}/config.json`); //user
+    // const response = await fetch(`http://${window.location.hostname}/config.json`); //me
     // const response = await fetch(`http://${window.location.hostname}:8001/config.json`); //simulation 3,4 new_devices
     // const response = await fetch('/config.json'); //ngrok
     const data = await response.json();
@@ -18,8 +18,8 @@ export const fetchDeviceData = createAsyncThunk(
 export const fetchCommonValvesData = createAsyncThunk(
   "devices/fetchCommonValvesData",
   async () => {
-    // const response = await fetch(`http://${window.location.host}/configCommonValves.json`); //user
-    const response = await fetch(`http://${window.location.hostname}/configCommonValves.json`); //me
+    const response = await fetch(`http://${window.location.host}/configCommonValves.json`); //user
+    // const response = await fetch(`http://${window.location.hostname}/configCommonValves.json`); //me
     // const response = await fetch('/configCommonValves.json'); //ngrok
     const data = await response.json();
     console.log("CommonValves (initial load) = ", data);
@@ -30,8 +30,8 @@ export const fetchCommonValvesData = createAsyncThunk(
 export const fetchCommonSensorsData = createAsyncThunk(
   "devices/fetchCommonSensorsData",
   async () => {
-    // const response = await fetch(`http://${window.location.host}/configCommonSensors.json`); //user
-    const response = await fetch(`http://${window.location.hostname}/configCommonSensors.json`); //me
+    const response = await fetch(`http://${window.location.host}/configCommonSensors.json`); //user
+    // const response = await fetch(`http://${window.location.hostname}/configCommonSensors.json`); //me
     // const response = await fetch('/configCommonSensors.json'); //ngrok
     const data = await response.json();
     console.log("CommonSensors (initial load) = ", data);
