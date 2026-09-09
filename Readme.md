@@ -175,31 +175,47 @@ form, so there is no running state to poll.
 ### The shape of an impact test
 
 ```
-impact test  ──trials──►  attempt  ──►  numbered impacts (shots)  ──►  photographs
+impact test  ──trials──►  attempt  ==  ONE impact (pass/fail)  ──►  photographs
 ```
 
-An impact test is a **sequence**: impact 1, impact 2, impact 3 — each numbered,
-each with its own pass/fail, each with its own photographs. `labos_test_id` is
-stable across every attempt at the same test, which is what lets "attempt 2 of
-the same test" be expressed.
+**One attempt is one impact.** An impact test is still a **sequence** — impact 1,
+impact 2, impact 3 — but the sequence is made of *attempts*, not of shots inside
+one attempt. Impact N is attempt N: `shot_number` mirrors `trial_number`, so the
+two ordinals always agree.
+
+This is the backend's TC1h shape (product owner, 2026-09-08). A second impact on
+one attempt is refused with **409**, and completing an attempt requires
+**exactly one** impact rather than at least one.
+
+`labos_test_id` is stable across every attempt at the same test, which is what
+lets the impacts of one test be grouped.
+
+There is no notion of re-doing impact 3: a specimen already struck cannot have
+that impact repeated, so a further firing is impact 6. A *wrongly recorded*
+result is superseded instead — see **Corrections** below.
 
 ### Operating it
 
 1. **Add Impact Test** in the table. Missile and weight are both optional — the
    protocol fixes the missile, so a test with neither is valid.
-2. Pick the test in the dropdown, type the **Operator** name, press **Start**.
-   That starts an *attempt*; the operator name is remembered per device.
-3. **Success / Fail** records one impact each. **+ Photos** on any impact row
-   attaches photographs to that impact specifically.
-4. **Upload Images / Upload Folder** attach attempt-level evidence — the
-   specimen before, the overall setup. **Preview** shows everything grouped by
-   where it belongs.
-5. **Finish Attempt** asks whether the specimen resisted, or aborts with a
-   reason. Completing needs at least one impact and at least one photograph;
-   aborting needs neither.
+2. Pick the test in the dropdown and type the **Operator** name. The name is
+   remembered per device.
+3. **Success / Fail** records one impact and opens its attempt. Pressing Start
+   first is optional — starting is idempotent on the backend, so either route
+   opens the same attempt and a double-press cannot produce two impacts.
+4. The **strip below the buttons** says what that impact still needs: the
+   pass/fail, then at least one photograph. **+ Photos** attaches to that
+   impact. **Upload Images / Upload Folder** attach evidence to its attempt —
+   the specimen before, the overall setup.
+5. **Complete impact N** closes it, or aborts with a reason. Completing needs
+   the impact and at least one photograph; aborting needs neither.
+6. Repeat from 3 for the next impact.
 
-The **History** column opens every attempt at that test, each expandable to its
-numbered impacts.
+Success and Fail are **disabled while an impact is open** — one attempt is one
+impact, so the current one is completed or aborted before the next is recorded.
+
+The **Impacts** grid lists the whole sequence for the selected test. The
+**History** column opens the same sequence with its full detail.
 
 ### Things the UI deliberately does
 
@@ -213,8 +229,14 @@ numbered impacts.
   an unchecked box.
 - **Photographs are append-only** — there is no delete, and they freeze once the
   attempt has been reviewed.
-- **Zero photographs on an impact is normal.** Only the attempt as a whole needs
-  at least one.
+- **Every impact needs at least one photograph**, because the impact and its
+  attempt are now the same thing. A per-impact photograph carries
+  `test_result_id` as well as `shot_id`, so photographing the impact satisfies
+  the attempt's evidence gate with no separate upload.
+- **The finish dialog no longer asks whether the specimen resisted.** The
+  attempt's outcome *is* its impact's outcome — the backend derives it from the
+  shot — so asking again could only produce a contradiction: a Fail impact
+  inside an attempt marked as resisted.
 - **API `detail` strings are shown as-is**, because they say what to do next.
 - The **Custom/Preset toggle does not apply to impact** — the API has no such
   split, so every open test is listed either way.
@@ -233,6 +255,7 @@ that service's own `openapi.json`, or `/docs` on a running instance:
 | `POST /shots/{sid}/photos` | photograph one impact |
 | `POST /test-results/{aid}/photos` | attempt-level evidence |
 | `PUT /test-results/{aid}/finish` | complete or abort the attempt |
+| `POST /test-results/{aid}/correct` | supersede a recorded result |
 | `PUT /test-results/{aid}/verdict` | the reviewer's call (not sent by this UI) |
 
 They are served by the `feature/labos-airtable` branch of `ifet-management`.
@@ -241,7 +264,26 @@ are a different model — shots hang off the test with no attempt layer.
 
 Two field placements are easy to get wrong: `labos_test_id` is on the **attempt**,
 not the test, and an attempt does **not** embed its impacts — those come from
-`GET /test-results/{aid}/shots`.
+`GET /test-results/{aid}/shots`. The attempts themselves *are* embedded, though:
+`GET /projects/{pid}/impact-tests/` returns each test with its full `trials`
+list, which is why the panel can show the impact sequence in one request.
+
+### Corrections
+
+A recorded result cannot be edited or deleted — the terminal state is final by
+design, and there is no edit or delete route for an attempt or an impact. So a
+mis-recorded result is **superseded**: `POST /test-results/{aid}/correct`
+opens a new attempt that names the one it replaces, carrying
+`corrects_attempt_id` and a required `correction_reason`.
+
+That distinction matters downstream: without the reference, a correction and a
+retest are indistinguishable, and a roll-up counting attempts would be wrong
+*and look right*.
+
+The **Correct** button in the History modal does this. It is offered only on a
+terminal attempt — an open one is completed correctly rather than corrected —
+and the test must have no other attempt open. It is allowed on a *finished*
+test, which is where a correction is most often needed.
 
 > **Photographs upload but cannot be displayed.** The API stores each file under
 > a generated uuid and keeps that in the model's `path` column, but
