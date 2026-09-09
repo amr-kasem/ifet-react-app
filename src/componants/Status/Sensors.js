@@ -1,45 +1,33 @@
 import React from "react";
 
 const Sensors = ({ deviceData, toggleBtn }) => {
-  const getSensorsColumns = () => {
-    const sensorsList = Object.entries(deviceData.sensors).map(
-      ([key, value]) => ({
-        ...value,
-        id: key, // Add an 'id' field to preserve the original key
-      })
-    );
-
-    const filteredSensors = sensorsList.filter(
+  const sensors = Object.entries(deviceData.sensors)
+    .map(([key, value]) => ({
+      ...value,
+      id: key, // Add an 'id' field to preserve the original key
+    }))
+    .filter(
       (sensor) =>
         toggleBtn === "static_load" ||
         (sensor.role === "pressure" && toggleBtn === "dynamic_load")
     );
 
-    return filteredSensors.map((sensor) => (
+  // Impact reads no sensors - it never touches the rig - so the filter above
+  // yields nothing and what was left was a "Sensors" heading over an empty
+  // table. Nothing to show means nothing to render, heading included.
+  if (sensors.length === 0) return null;
+
+  const getSensorsColumns = () =>
+    sensors.map((sensor) => (
       <th key={sensor.id} scope="col">
         {sensor.name.replace("sensor", "")}
       </th>
     ));
-  };
 
-  const getSensorsData = () => {
-    const sensorsList = Object.entries(deviceData.sensors).map(
-      ([key, value]) => ({
-        ...value,
-        id: key, // Add an 'id' field to preserve the original key
-      })
-    );
-
-    const filteredSensors = sensorsList.filter(
-      (sensor) =>
-        toggleBtn === "static_load" ||
-        (sensor.role === "pressure" && toggleBtn === "dynamic_load")
-    );
-
-    return filteredSensors.map((sensor) => (
+  const getSensorsData = () =>
+    sensors.map((sensor) => (
       <td key={sensor.id}>{parseFloat(sensor.value).toFixed(3)}</td>
     ));
-  };
 
   return (
     <div className="row mt-4">

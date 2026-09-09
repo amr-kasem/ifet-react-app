@@ -59,7 +59,7 @@ const Device = (props) => {
           <div className="col card-body">
             <div className="row">
               <Adjust deviceID={device.deviceID} projectID={projectID} fetchProjects={fetchProjects}/>
-              <Status deviceData={device} />
+              <Status deviceData={device} panel />
             </div>
             <hr />
             <div className="row">

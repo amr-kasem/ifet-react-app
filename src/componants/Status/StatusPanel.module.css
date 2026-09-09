@@ -1,0 +1,151 @@
+/* The right-hand column beside the dark device card: device state, sensor
+   readings, ambient conditions and valve states.
+
+   It is opt-in (`panel` on <Status/>) so the valves-only slave-mode variant is
+   untouched. */
+.panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  /* space-between, so the sections spread to fill whatever height the row
+     takes from the dark card rather than leaving a dead band at the bottom. */
+  justify-content: space-between;
+  padding: 1rem 1.15rem 1.15rem;
+  background: #fff;
+  border: 1px solid #e4e7eb;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+}
+
+/* The sections come from four separate components, so their own spacing is
+   neutralised here and the panel owns the rhythm. */
+.panel > * {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* Section headings: quiet labels, not page headings. */
+.panel :global(h4) {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #8a94a6;
+}
+
+/* --- tables (sensors, valves) -------------------------------------------- */
+.panel :global(.table) {
+  margin-bottom: 0;
+  border-color: #e4e7eb;
+}
+
+.panel :global(.table-responsive) {
+  border-radius: 8px;
+  border: 1px solid #e4e7eb;
+  overflow: hidden;
+}
+
+.panel :global(.table-bordered) {
+  border: 0;
+}
+
+.panel :global(.table) th {
+  background: #2b3444;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  border-color: #3a4457;
+  padding: 0.45rem 0.35rem;
+}
+
+.panel :global(.table) td {
+  padding: 0.5rem 0.35rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  color: #212529;
+  background: #fff;
+  border-color: #e9edf2;
+}
+
+/* The table sits flush inside its rounded wrapper. */
+.panel :global(.table) tr > *:first-child {
+  border-left: 0;
+}
+
+.panel :global(.table) tr > *:last-child {
+  border-right: 0;
+}
+
+.panel :global(.table) tr:last-child > * {
+  border-bottom: 0;
+}
+
+/* --- ambient conditions (temperature / humidity / send) ------------------ */
+/* Others renders a bare <table> for layout; strip its table-ness so it reads
+   as a form row like the rest of the panel. */
+.conditions :global(table),
+.conditions :global(tbody),
+.conditions :global(tr),
+.conditions :global(td) {
+  display: block;
+  width: 100%;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.conditions :global(label) {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6c757d;
+}
+
+.conditions :global(.form-control) {
+  min-height: 44px;
+  font-size: 1rem;
+}
+
+.conditions :global(.btn) {
+  min-height: 44px;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.conditions :global(.d-flex) {
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+
+.conditions :global(.form-group) {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* --- device state -------------------------------------------------------- */
+.statusBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.statusValue {
+  display: flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 0.35rem 0.9rem;
+  border-radius: 8px;
+  background: #f59f0a;
+  color: #1f2430;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.2;
+  /* A long state string must not widen the column. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

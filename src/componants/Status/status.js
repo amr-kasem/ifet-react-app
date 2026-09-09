@@ -4,6 +4,7 @@ import Valves from "./Valves";
 import Sensors from "./Sensors";
 import StatusOfOperation from "./StatusOfOperation";
 import Others from "./Others";
+import panelStyles from "./StatusPanel.module.css";
 import { useDispatch, useSelector } from "react-redux";
 import { devicesActions } from "../../store/sensors-slice";
 
@@ -12,6 +13,9 @@ const Status = ({
   showSensors = true,
   showOthers = true,
   showStatus = true,
+  // Opt-in: the styled panel that fills the height beside the device card.
+  // The slave-mode variant renders valves only and is left as it was.
+  panel = false,
   ...props
 }) => {
   const dispatch = useDispatch();
@@ -70,27 +74,32 @@ const Status = ({
     <>
       <HookMqtt ref={ref3} topics={[]} />
       {/* <div className="col-4"> */}
-      <div className={`col-4 ${props.className}`}>
-        {showStatus && <StatusOfOperation status={deviceData.status} />}
-        {showSensors && (
-          <Sensors deviceData={deviceData} toggleBtn={toggleBtn} />
-        )}
-        {showOthers && (
-          <Others
-            temperature={temperature}
-            humidity={humidity}
-            handleTemperatureChange={handleTemperatureChange}
-            handleHumidityChange={handleHumidityChange}
-            startInterval={startInterval}
-          />
-        )}
-        {showValves && (
-          <Valves
-            deviceID={deviceID}
-            neededDevice={neededDevice}
-            ref3={ref3}
-          />
-        )}
+      <div className={`col-4 ${props.className || ""}`}>
+        <div className={panel ? panelStyles.panel : undefined}>
+          {showStatus && <StatusOfOperation status={deviceData.status} />}
+          {showSensors && (
+            <Sensors deviceData={deviceData} toggleBtn={toggleBtn} />
+          )}
+          {showOthers && (
+            <div className={panel ? panelStyles.conditions : undefined}>
+              <h4>Conditions</h4>
+              <Others
+                temperature={temperature}
+                humidity={humidity}
+                handleTemperatureChange={handleTemperatureChange}
+                handleHumidityChange={handleHumidityChange}
+                startInterval={startInterval}
+              />
+            </div>
+          )}
+          {showValves && (
+            <Valves
+              deviceID={deviceID}
+              neededDevice={neededDevice}
+              ref3={ref3}
+            />
+          )}
+        </div>
       </div>
     </>
   );
