@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import ImageModal from "../Modals/ImageModal";
 import styles from "./ImpactAttemptsModal.module.css";
-import { impactError, impactPhotoUrl, listShots } from "./impactApi";
+import {
+  correctAttempt,
+  impactError,
+  impactPhotoUrl,
+  listShots,
+} from "./impactApi";
 
 const orDash = (value) =>
   value === null || value === undefined || value === "" ? "—" : value;
@@ -32,12 +37,24 @@ const PhotoTile = ({ photo, onOpen }) => {
   );
 };
 
-const ImpactAttemptsModal = ({ visible, test, onClose }) => {
+// ONE ATTEMPT IS ONE IMPACT, so this list is the test's impact sequence:
+// attempt N is impact N. Attempts recorded before that change can still hold
+// several impacts, which is why each row still expands to its own shots.
+const ImpactAttemptsModal = ({
+  visible,
+  test,
+  operatorName,
+  onChanged,
+  onClose,
+}) => {
   const [expanded, setExpanded] = useState(null);
   const [shotsByAttempt, setShotsByAttempt] = useState({});
   const [loadingId, setLoadingId] = useState(null);
   const [error, setError] = useState("");
   const [fullPhoto, setFullPhoto] = useState(null);
+  const [correcting, setCorrecting] = useState(null); // attempt being corrected
+  const [reason, setReason] = useState("");
+  const [correctBusy, setCorrectBusy] = useState(false);
 
   if (!visible || !test) return null;
 
@@ -69,6 +86,30 @@ const ImpactAttemptsModal = ({ visible, test, onClose }) => {
       return `Aborted — ${orDash(attempt.abort_reason)}`;
     if (attempt.result === null || attempt.result === undefined) return "—";
     return attempt.result ? "Resisted" : "Did not resist";
+  };
+
+  // A recorded result cannot be edited or deleted - the terminal state is
+  // final - so a mistake is superseded by a new attempt naming this one.
+  const submitCorrection = async () => {
+    if (!reason.trim()) return;
+    try {
+      setCorrectBusy(true);
+      setError("");
+      await correctAttempt(correcting.id, {
+        reason: reason.trim(),
+        operatorName: operatorName || null,
+      });
+      setCorrecting(null);
+      setReason("");
+      if (onChanged) onChanged();
+      onClose();
+    } catch (err) {
+      // The refusals say what to do: finish the open attempt, or supply a
+      // reason, or correct a terminal attempt rather than an open one.
+      setError(impactError(err, "Could not record the correction."));
+    } finally {
+      setCorrectBusy(false);
+    }
   };
 
   const retest = (attempt) => {
@@ -108,7 +149,7 @@ const ImpactAttemptsModal = ({ visible, test, onClose }) => {
             <table className="table table-bordered text-center align-middle">
               <thead className="table-dark">
                 <tr>
-                  <th style={{ width: "70px" }}>Attempt</th>
+                  <th style={{ width: "70px" }}>Impact</th>
                   <th style={{ width: "150px" }}>LabOS Attempt ID</th>
                   <th style={{ width: "110px" }}>Operator</th>
                   <th style={{ width: "100px" }}>State</th>
@@ -116,20 +157,26 @@ const ImpactAttemptsModal = ({ visible, test, onClose }) => {
                   <th style={{ width: "100px" }}>Review</th>
                   <th style={{ width: "120px" }}>Retest required</th>
                   <th style={{ width: "90px" }}>Photos</th>
-                  <th style={{ width: "80px" }}>Impacts</th>
+                  <th style={{ width: "80px" }}>Shots</th>
+                  <th style={{ width: "90px" }}>Correct</th>
                 </tr>
               </thead>
               <tbody>
                 {trials.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className={styles.muted}>
-                      This test has no attempts yet.
+                    <td colSpan="10" className={styles.muted}>
+                      This test has no impacts yet.
                     </td>
                   </tr>
                 ) : (
                   trials.map((attempt) => {
                     const shots = shotsByAttempt[attempt.id];
                     const isOpen = expanded === attempt.id;
+                    // Only a finished result can be superseded; an open attempt
+                    // is completed correctly instead.
+                    const terminal =
+                      attempt.status === "Completed" ||
+                      attempt.status === "Aborted";
 
                     return (
                       <React.Fragment key={attempt.id}>
@@ -139,6 +186,17 @@ const ImpactAttemptsModal = ({ visible, test, onClose }) => {
                         >
                           <td>
                             <strong>{attempt.trial_number}</strong>
+                            {attempt.corrects_attempt_id && (
+                              <span
+                                className={styles.correctionMark}
+                                title={`Supersedes ${attempt.corrects_attempt_id} - ${orDash(
+                                  attempt.correction_reason
+                                )}`}
+                              >
+                                {" "}
+                                &#8634;
+                              </span>
+                            )}
                           </td>
                           <td className={styles.mono}>
                             {orDash(attempt.labos_attempt_id)}
@@ -166,11 +224,28 @@ const ImpactAttemptsModal = ({ visible, test, onClose }) => {
                               ? "…"
                               : `${shots ? shots.length : ""} ${isOpen ? "▲" : "▼"}`}
                           </td>
+                          <td onClick={(e) => e.stopPropagation()}>
+                            {terminal ? (
+                              <button
+                                type="button"
+                                className={styles.correctButton}
+                                onClick={() => {
+                                  setCorrecting(attempt);
+                                  setReason("");
+                                }}
+                                title="Supersede this recorded result with a new impact"
+                              >
+                                Correct
+                              </button>
+                            ) : (
+                              <span className={styles.muted}>open</span>
+                            )}
+                          </td>
                         </tr>
 
                         {isOpen && (
                           <tr>
-                            <td colSpan="9" className={styles.shotCell}>
+                            <td colSpan="10" className={styles.shotCell}>
                               {!shots ? (
                                 <p className={styles.noShots}>Loading impacts…</p>
                               ) : shots.length === 0 ? (
@@ -261,6 +336,16 @@ const ImpactAttemptsModal = ({ visible, test, onClose }) => {
                                 )}
                               </div>
 
+                              {attempt.corrects_attempt_id && (
+                                <p className={styles.attemptNote}>
+                                  <strong>Correction of</strong>{" "}
+                                  <span className={styles.mono}>
+                                    {attempt.corrects_attempt_id}
+                                  </span>{" "}
+                                  - {orDash(attempt.correction_reason)}
+                                </p>
+                              )}
+
                               {attempt.note && (
                                 <p className={styles.attemptNote}>
                                   <strong>Note:</strong> {attempt.note}
@@ -277,9 +362,48 @@ const ImpactAttemptsModal = ({ visible, test, onClose }) => {
             </table>
           </div>
 
+          {correcting && (
+            <div className={styles.correctBox}>
+              <p className={styles.correctTitle}>
+                Supersede impact {correcting.trial_number}
+              </p>
+              <p className={styles.correctAside}>
+                This deletes nothing. It opens a new impact on this test that
+                names impact {correcting.trial_number} as the one it replaces,
+                so a correction is never mistaken for a retest. The test must
+                have no impact open.
+              </p>
+              <input
+                type="text"
+                className="form-control"
+                placeholder="Why is this being corrected? (required)"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+              <div className={styles.correctButtons}>
+                <button
+                  type="button"
+                  className={styles.cancelButton}
+                  onClick={() => setCorrecting(null)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={styles.confirmButton}
+                  onClick={submitCorrection}
+                  disabled={correctBusy || !reason.trim()}
+                >
+                  Open correction
+                </button>
+              </div>
+            </div>
+          )}
+
           <p className={styles.footnote}>
-            &ldquo;Completed&rdquo; next to &ldquo;Pending&rdquo; is correct — it
-            means tested, awaiting review. Every attempt is retained.
+            &ldquo;Completed&rdquo; next to &ldquo;Pending&rdquo; is correct - it
+            means tested, awaiting review. Every impact is retained: a wrong
+            result is superseded by a correction, never edited away.
           </p>
         </div>
       </div>

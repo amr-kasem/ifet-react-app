@@ -11,3 +11,65 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* The dark device card has a height floor so every load type is the same
+   height (see adjust.js). Static and Cyclic do not fill it - they are ~78px
+   short - and the slack was showing as one dead band at the bottom.
+
+   The body is a flex column, and the two `auto` margins below share that slack
+   between the two places a break already belongs: above the rule that divides
+   the speed controls from the test parameters, and above the final action row.
+   Distributing it evenly instead would have pushed the "Frequency" label away
+   from its own slider, which is why this targets the section breaks rather
+   than using justify-content. Impact fills the card on its own, so there is no
+   slack left for these to claim. */
+.device-card-body > hr {
+  margin-top: auto;
+}
+
+.device-card-body > .row:last-child {
+  margin-top: auto;
+}
+
+/* The controls in the dark device card sit in a fixed-height area, so they are
+   sized to fill it rather than leaving the space to the gaps above. Scoped to
+   this card so nothing else on the page changes size. */
+/* Text in the dark card reads at arm's length from the rig, so it is sized up
+   with the controls rather than left at the page default. */
+.device-card-body {
+  font-size: 1.05rem;
+}
+
+.device-card-body .form-label,
+.device-card-body > .row label,
+.device-card-body label.form-label {
+  font-size: 1.05rem;
+  margin-bottom: 0.55rem;
+}
+
+.device-card-body .form-control,
+.device-card-body .form-select {
+  min-height: 52px;
+  font-size: 1.05rem;
+}
+
+.device-card-body .input-group > .btn {
+  min-height: 52px;
+}
+
+.device-card-body .form-range {
+  height: 2.25rem;
+}
+
+/* Impact renders the Controls row (Custom / test dropdown / Start) FIRST,
+   because it has no frequency slider or sensor row above it. Every other load
+   type renders that row LAST, at the bottom of the card. Switching load type
+   therefore moved the test picker and the Start button from the bottom of the
+   card to the top, which is exactly the control an operator reaches for.
+
+   The body is a flex column, so ordering it last puts it in the same place in
+   every load type. Done with `order` rather than by moving the JSX so that
+   Controls is not unmounted and remounted on every load-type change. */
+.device-card-body--impact > .row {
+  order: 2;
+}

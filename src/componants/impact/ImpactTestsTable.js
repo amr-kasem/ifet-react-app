@@ -100,6 +100,10 @@ const ImpactTestsTable = ({ projectID, neededDevice, status }) => {
       <ImpactAttemptsModal
         visible={openAttempts !== null}
         test={tests.find((t) => t.id === openAttempts) || null}
+        operatorName={
+          localStorage.getItem(`impact_operator_${neededDevice.deviceID}`) || ""
+        }
+        onChanged={load}
         onClose={() => setOpenAttempts(null)}
       />
 

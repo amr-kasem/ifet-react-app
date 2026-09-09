@@ -1,6 +1,15 @@
 /* Sits inside the dark device card, so colours assume a dark ground. */
 .panel {
   margin-top: 1rem;
+  /* Fills the card, which has a height floor so every load type matches.
+     space-between spends the slack as extra room BETWEEN the rows rather than
+     leaving it as one gap under the last one, so the panel reads as evenly
+     spaced instead of top-heavy. */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .resultRow {
@@ -18,27 +27,60 @@
 
 .hint {
   margin: 0.5rem 0 0;
-  font-size: 0.9rem;
-  opacity: 0.7;
+  font-size: 0.95rem;
+  opacity: 0.75;
 }
 
 .divider {
-  margin: 1rem 0;
-  opacity: 0.35;
+  margin: 0.9rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  opacity: 1;
+}
+
+/* Uploads and Finish share one bar, so the action row uses the width of the
+   card instead of stacking two full-width blocks down it. */
+.footerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  /* Fixed: the Finish button is taller than the upload buttons, so the row grew
+     by a few pixels when an impact opened. Held at the taller of the two. */
+  min-height: 2.375rem;
 }
 
 .uploadRow {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  /* nowrap, and the buttons shrink instead: when the Finish button appears it
+     takes ~11rem, and wrapping buttons onto a second line would change the
+     card's height on the press. */
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+  /* Narrow enough that the Finish button stays on this line in a col-8 down
+     to roughly a 950px page - wrapping would change the card's height, which
+     the min-height above cannot absorb. */
+  flex: 1 1 18rem;
+  min-width: 0;
 }
 
 .uploadButton {
-  flex: 1 1 150px;
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Reserved whether or not there is anything to say, so the card keeps its
+   height when a message or the upload bar appears. */
+.messageSlot {
+  margin-top: 0.6rem;
+  min-height: 1.4rem;
 }
 
 .progress {
-  margin-top: 0.75rem;
+  margin: 0;
   height: 1.25rem;
 }
 
@@ -81,15 +123,15 @@
 }
 
 .errorText {
-  margin: 0.75rem 0 0;
+  margin: 0;
   color: #ff8080;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .successText {
-  margin: 0.75rem 0 0;
+  margin: 0;
   color: #8fe6a4;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 /* --- operator name ------------------------------------------------------ */
@@ -104,7 +146,7 @@
   flex: 0 0 auto;
   margin: 0;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 .operatorRow input {
@@ -114,67 +156,44 @@
 
 .attemptBadge {
   flex: 0 0 auto;
-  font-size: 0.8rem;
-  padding: 0.2rem 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.4);
   white-space: nowrap;
 }
 
-/* --- recorded impacts --------------------------------------------------- */
-.shotList {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.shotRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.3rem 0.5rem;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.07);
-  font-size: 0.9rem;
-}
-
-.shotNumber {
-  flex: 0 0 2.2rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+.shotPass,
+.shotFail {
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-size: 0.78rem;
 }
 
 .shotPass {
-  flex: 0 0 3.2rem;
   color: #8fe6a4;
-  font-weight: 600;
 }
 
 .shotFail {
-  flex: 0 0 3.2rem;
   color: #ff8080;
-  font-weight: 600;
-}
-
-.shotPhotos {
-  flex: 1 1 auto;
-  opacity: 0.7;
 }
 
 .shotAddPhoto {
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   background: transparent;
   color: #fff;
   border-radius: 5px;
   font-size: 0.8rem;
-  padding: 0.15rem 0.55rem;
+  line-height: 1.35;
+  padding: 0.16rem 0.5rem;
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .shotAddPhoto:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.15);
+  border-color: #fff;
 }
 
 .shotAddPhoto:disabled {
@@ -183,11 +202,59 @@
 }
 
 /* --- finish ------------------------------------------------------------- */
-.finishRow {
-  margin-top: 0.85rem;
-}
-
 .finishButton {
-  width: 100%;
+  flex: 0 1 11.5rem;
+  margin-left: auto; /* stays right when the action bar wraps */
   font-weight: 600;
 }
+
+/* --- the impact being worked on ----------------------------------------- */
+/* One attempt is one impact, so there is always at most one of these, and it
+   states what the API still needs before the impact can be completed. */
+.currentStrip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+  padding: 0.45rem 0.6rem;
+  /* Fixed: the strip gains a "+ Photos" button once an impact is recorded, and
+     without this the card grew by a few pixels on the press. */
+  min-height: 2.5rem;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  font-size: 0.92rem;
+}
+
+/* Nothing open: holds the strip's height without claiming a state. */
+.currentIdle {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.currentWaiting {
+  background: rgba(255, 193, 7, 0.12);
+  border-color: rgba(255, 193, 7, 0.45);
+}
+
+.currentReady {
+  background: rgba(143, 230, 164, 0.12);
+  border-color: rgba(143, 230, 164, 0.45);
+}
+
+.currentLabel {
+  flex: 0 0 auto;
+  font-weight: 700;
+}
+
+.currentMuted {
+  flex: 0 0 auto;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.currentNeed {
+  flex: 1 1 auto;
+  min-width: 0;
+  opacity: 0.85;
+}
+

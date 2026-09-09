@@ -1,5 +1,15 @@
 import axios from "axios";
 
+// ONE ATTEMPT IS ONE IMPACT (backend TC1h, 2026-09-08).
+//
+//   impact test  ──►  attempts  ──►  each attempt is exactly ONE impact
+//                                    (its pass/fail, its photographs)
+//
+// The sequence — impact 1, 2, 3 — is made of attempts, not of shots inside one
+// attempt. `shot_number` mirrors `attempt.trial_number`, a second impact on an
+// attempt is refused with 409 by `uq_shots_attempt_number`, and the finish gate
+// requires exactly one impact rather than at least one.
+//
 // The impact routes live on the same backend as everything else (port 8000).
 export const IMPACT_API_PORT = 8000;
 
@@ -102,6 +112,23 @@ export const finishAttempt = async (attemptId, body) => {
 export const abortAttempt = (attemptId, abortReason) =>
   finishAttempt(attemptId, { abort_reason: abortReason });
 
+// Supersede a recorded result: a new OPEN attempt naming the one it replaces.
+// There is no edit or delete route for an attempt or an impact — by design, the
+// terminal state is final — so this is the only way to repair a mis-recorded
+// result. `reason` is required.
+//
+// Refused when the original is still open (400 — an open attempt is completed
+// correctly, not corrected), when the test already has an open attempt (409),
+// or when the reason is empty (400). Allowed on a finished test.
+export const correctAttempt = async (attemptId, { reason, operatorName }) => {
+  const { data } = await axios.post(
+    `${impactApiBase()}/test-results/${attemptId}/correct`,
+    { reason, operator_name: operatorName || null },
+    json
+  );
+  return data;
+};
+
 // The reviewer's call, not the operator's. Kept here so the review screen has
 // it; nothing in the operator panel should send it.
 export const setVerdict = async (attemptId, body) => {
@@ -113,9 +140,13 @@ export const setVerdict = async (attemptId, body) => {
   return data;
 };
 
-// --- shots (the numbered impacts) ----------------------------------------
+// --- the impact (one per attempt) ----------------------------------------
 
-// shot_number is allocated server-side — never send one.
+// Records THIS attempt's impact. A second call on the same attempt is a 409:
+// one attempt is one impact, so the next impact is the next attempt.
+//
+// shot_number is allocated server-side — never send one. It now mirrors the
+// attempt's trial_number, so the impact ordinal and the attempt ordinal agree.
 export const recordShot = async (attemptId, { result, area, velocity, note }) => {
   const num = (v) => (v === undefined || v === null || v === "" ? null : Number(v));
   const { data } = await axios.post(

@@ -7,22 +7,34 @@ import {
   impactError,
   listShots,
   recordShot,
+  startImpactAttempt,
   uploadPhotos,
 } from "./impactApi";
 
+// ONE ATTEMPT IS ONE IMPACT (backend TC1h). Recording an impact starts an
+// attempt and posts its single shot; completing that attempt closes the impact,
+// and the next impact is the next attempt.
+//
+// This panel drives ONE impact - the open one. The sequence of all of them is
+// ImpactSequence, on the white ground below the device card; `onChanged` tells
+// it to reload after anything here changes what it shows.
 const ImpactPanel = ({
+  projectId,
+  testId,
   attempt,
   setAttempt,
   operatorName,
   setOperatorName,
+  onAttemptStarted,
   onAttemptClosed,
+  onChanged,
 }) => {
   const filesInputRef = useRef();
   const folderInputRef = useRef();
   const shotFilesInputRef = useRef();
-  const photoTargetRef = useRef(null); // shot awaiting photos, or null
+  const photoTargetRef = useRef(null); // {shotId} or {attemptId}
 
-  const [shots, setShots] = useState([]);
+  const [shots, setShots] = useState([]); // the OPEN attempt's impact (0 or 1)
   const [attemptPhotos, setAttemptPhotos] = useState([]);
   const [showFinish, setShowFinish] = useState(false);
   const [showGallery, setShowGallery] = useState(false);
@@ -39,7 +51,12 @@ const ImpactPanel = ({
 
   const flash = (text, tone = "info") => {
     setMessage({ text, tone });
-    setTimeout(() => setMessage(null), 5000);
+    setTimeout(() => setMessage(null), 6000);
+  };
+
+  // The sequence below the card owns the list; this only asks it to reload.
+  const changed = () => {
+    if (onChanged) onChanged();
   };
 
   const loadShots = async (attemptId) => {
@@ -50,34 +67,74 @@ const ImpactPanel = ({
     try {
       setShots(await listShots(attemptId));
     } catch (error) {
-      console.error("Could not load impacts", error);
+      console.error("Could not load the impact", error);
     }
   };
 
   useEffect(() => {
-    // shot_id null means attempt-level. The attempt list also carries every
-    // shot photo, so filtering here stops the same file appearing twice.
+    // shot_id null means attempt-level. The attempt also carries its shot's
+    // photos, so filtering here stops the same file appearing twice.
     setAttemptPhotos((attempt?.photos || []).filter((p) => p.shot_id == null));
     loadShots(attempt?.id);
   }, [attempt?.id]);
 
   const inProgress = attempt?.status === "In Progress";
   const evidenceOpen = attempt?.test_result === "Pending";
+
+  // Legacy attempts recorded before TC1h can hold several impacts; the current
+  // routes allow only one, so this is the impact of the open attempt.
+  const currentShot = shots.length > 0 ? shots[0] : null;
+
   const photoCount =
     attemptPhotos.length +
     shots.reduce((n, s) => n + (s.photos?.length || 0), 0);
 
-  const handleRecordShot = async (result) => {
+  const needsImpact = inProgress && !currentShot;
+  const needsPhoto = inProgress && currentShot && photoCount === 0;
+  const readyToComplete = inProgress && currentShot && photoCount > 0;
+
+  // Success / Fail records THIS attempt's impact. Starting is idempotent on the
+  // backend - an open attempt is returned, not duplicated - so pressing either
+  // button opens the attempt when there is none, and the operator never has to
+  // press Start first.
+  const handleRecordImpact = async (result) => {
+    if (!testId) {
+      flash("Select an impact test first.", "error");
+      return;
+    }
+    // Guarded here as well as by the 409, so the refusal names what to do next.
+    if (currentShot) {
+      flash(
+        `Impact ${currentShot.shot_number} is already recorded on this attempt. ` +
+          "One attempt is one impact - complete or abort it, then record the next.",
+        "error"
+      );
+      return;
+    }
+
     try {
       setBusy(true);
-      const shot = await recordShot(attempt.id, { result });
-      await loadShots(attempt.id);
+      const open =
+        attempt && inProgress
+          ? attempt
+          : await startImpactAttempt(projectId, testId, operatorName || null);
+
+      if (!attempt || attempt.id !== open.id) {
+        setAttempt(open);
+        if (onAttemptStarted) onAttemptStarted(open);
+      }
+
+      const shot = await recordShot(open.id, { result });
+      await loadShots(open.id);
+      changed();
       flash(
-        `Impact ${shot.shot_number} recorded as ${result ? "PASS" : "FAIL"}.`,
+        `Impact ${shot.shot_number} recorded as ${result ? "PASS" : "FAIL"}. ` +
+          "Attach a photograph, then complete it.",
         "success"
       );
     } catch (error) {
       flash(impactError(error, "Could not record the impact."), "error");
+      changed();
     } finally {
       setBusy(false);
     }
@@ -96,30 +153,36 @@ const ImpactPanel = ({
       return;
     }
 
+    const destination = target || { attemptId: attempt?.id };
+    if (!destination.shotId && !destination.attemptId) return;
+
     try {
       setProgress(0);
-      // One request per photograph — that is what the API accepts.
+      // One request per photograph - that is what the API accepts.
       const { saved, failed } = await uploadPhotos(
-        target ? { shotId: target.id } : { attemptId: attempt.id },
+        destination,
         images,
         setProgress
       );
 
-      if (target) {
+      // A shot photograph carries test_result_id too, so either destination
+      // satisfies the finish gate; reload whichever view holds the count.
+      if (destination.shotId && destination.shotId === currentShot?.id) {
         await loadShots(attempt.id);
-      } else {
+      } else if (!destination.shotId && destination.attemptId === attempt?.id) {
         setAttemptPhotos((prev) => [...prev, ...saved]);
       }
+      changed();
 
-      const where = target ? `impact ${target.shot_number}` : "the attempt";
       const skipped = picked.length - images.length;
       const parts = [
-        `${saved.length} photograph${saved.length === 1 ? "" : "s"} added to ${where}`,
+        `${saved.length} photograph${saved.length === 1 ? "" : "s"} added`,
       ];
       if (skipped > 0) parts.push(`${skipped} non-image skipped`);
-      if (failed.length > 0) parts.push(`${failed.length} failed: ${failed[0].reason}`);
+      if (failed.length > 0)
+        parts.push(`${failed.length} failed: ${failed[0].reason}`);
 
-      flash(`${parts.join(" — ")}.`, failed.length > 0 ? "error" : "success");
+      flash(`${parts.join(" - ")}.`, failed.length > 0 ? "error" : "success");
     } catch (error) {
       flash(impactError(error, "Upload failed."), "error");
     } finally {
@@ -127,8 +190,12 @@ const ImpactPanel = ({
     }
   };
 
-  const pickPhotosForShot = (shot) => {
-    photoTargetRef.current = shot;
+  // shot_id says which impact the photograph shows, so target the shot when
+  // there is one. Past impacts are photographed from the sequence below.
+  const pickPhotosForCurrent = () => {
+    photoTargetRef.current = currentShot
+      ? { shotId: currentShot.id }
+      : { attemptId: attempt?.id };
     shotFilesInputRef.current?.click();
   };
 
@@ -138,16 +205,18 @@ const ImpactPanel = ({
       const updated = await finishAttempt(attempt.id, body);
       setShowFinish(false);
       setAttempt(updated);
+      setShots([]);
+      changed();
       flash(
         updated.status === "Aborted"
-          ? `Attempt aborted — ${updated.abort_reason}.`
-          : `Attempt ${updated.trial_number} completed. Awaiting review.`,
+          ? `Impact ${updated.trial_number} aborted - ${updated.abort_reason}.`
+          : `Impact ${updated.trial_number} completed. Awaiting review.`,
         "success"
       );
       if (onAttemptClosed) onAttemptClosed(updated);
     } catch (error) {
-      // The detail says what is missing — an impact, or a photograph.
-      flash(impactError(error, "Could not finish the attempt."), "error");
+      // The detail says what is missing - the impact, or a photograph.
+      flash(impactError(error, "Could not complete the impact."), "error");
     } finally {
       setBusy(false);
     }
@@ -157,7 +226,8 @@ const ImpactPanel = ({
     <>
       <ImpactFinishModal
         visible={showFinish}
-        shots={shots}
+        impactNumber={attempt?.trial_number}
+        shot={currentShot}
         photoCount={photoCount}
         busy={busy}
         onCancel={() => setShowFinish(false)}
@@ -184,12 +254,12 @@ const ImpactPanel = ({
             placeholder="e.g. technician-1"
             value={operatorName}
             onChange={(e) => setOperatorName(e.target.value)}
-            disabled={!!attempt}
+            disabled={inProgress}
             title="A declared name, not a login. Remembered for this device."
           />
-          {attempt && (
+          {inProgress && (
             <span className={styles.attemptBadge}>
-              Attempt {attempt.trial_number} · {attempt.status}
+              Impact {attempt.trial_number} &middot; open
             </span>
           )}
         </div>
@@ -198,142 +268,176 @@ const ImpactPanel = ({
           <button
             type="button"
             className={`btn btn-success btn-lg ${styles.resultButton}`}
-            onClick={() => handleRecordShot(true)}
-            disabled={!inProgress || busy}
+            onClick={() => handleRecordImpact(true)}
+            disabled={!testId || busy || !!currentShot}
           >
             Success
           </button>
           <button
             type="button"
             className={`btn btn-danger btn-lg ${styles.resultButton}`}
-            onClick={() => handleRecordShot(false)}
-            disabled={!inProgress || busy}
+            onClick={() => handleRecordImpact(false)}
+            disabled={!testId || busy || !!currentShot}
           >
             Fail
           </button>
         </div>
 
         <p className={styles.hint}>
-          {inProgress
-            ? "Each press records one impact. Photograph each one, then finish the attempt."
-            : attempt
-            ? `This attempt is ${attempt.status.toLowerCase()}. Press Start for a new attempt.`
-            : "Select an impact test and press Start to begin an attempt."}
+          {!testId
+            ? "Select an impact test to begin."
+            : currentShot
+            ? "One attempt is one impact. Complete this one to record the next."
+            : "Each press records one impact and opens its attempt."}
         </p>
 
-        {shots.length > 0 && (
-          <div className={styles.shotList}>
-            {shots.map((shot) => (
-              <div key={shot.id} className={styles.shotRow}>
-                <span className={styles.shotNumber}>#{shot.shot_number}</span>
-                <span className={shot.result ? styles.shotPass : styles.shotFail}>
-                  {shot.result ? "Pass" : "Fail"}
+        {/* What this impact still needs, in the order the API requires it.
+            Always rendered - an idle variant when nothing is open - so that
+            pressing Success or Fail does not make the card jump taller. */}
+        <div
+          className={`${styles.currentStrip} ${
+            !inProgress
+              ? styles.currentIdle
+              : readyToComplete
+              ? styles.currentReady
+              : styles.currentWaiting
+          }`}
+        >
+          {inProgress ? (
+            <>
+              <span className={styles.currentLabel}>
+                Impact {attempt.trial_number}
+              </span>
+              {currentShot ? (
+                <span
+                  className={
+                    currentShot.result ? styles.shotPass : styles.shotFail
+                  }
+                >
+                  {currentShot.result ? "Pass" : "Fail"}
                 </span>
-                <span className={styles.shotPhotos}>
-                  {shot.photos?.length || 0}{" "}
-                  {(shot.photos?.length || 0) === 1 ? "photo" : "photos"}
-                </span>
+              ) : (
+                <span className={styles.currentMuted}>not recorded</span>
+              )}
+              <span className={styles.currentNeed}>
+                {needsImpact
+                  ? "Press Success or Fail."
+                  : needsPhoto
+                  ? "At least one photograph is required."
+                  : `${photoCount} photograph${
+                      photoCount === 1 ? "" : "s"
+                    } - ready.`}
+              </span>
+              {currentShot && (
                 <button
                   type="button"
                   className={styles.shotAddPhoto}
-                  onClick={() => pickPhotosForShot(shot)}
+                  onClick={pickPhotosForCurrent}
                   disabled={progress !== null || !evidenceOpen}
                 >
                   + Photos
                 </button>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
+            </>
+          ) : (
+            <span className={styles.currentMuted}>
+              No impact open - Success or Fail records the next one.
+            </span>
+          )}
+        </div>
 
         <hr className={styles.divider} />
 
-        <div className={styles.uploadRow}>
-          <input
-            ref={filesInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            onChange={handleFilesPicked}
-          />
-          <input
-            ref={folderInputRef}
-            type="file"
-            multiple
-            hidden
-            onChange={handleFilesPicked}
-          />
-          <input
-            ref={shotFilesInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            onChange={handleFilesPicked}
-          />
+        <div className={styles.footerRow}>
+          <div className={styles.uploadRow}>
+            <input
+              ref={filesInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={handleFilesPicked}
+            />
+            <input
+              ref={folderInputRef}
+              type="file"
+              multiple
+              hidden
+              onChange={handleFilesPicked}
+            />
+            <input
+              ref={shotFilesInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={handleFilesPicked}
+            />
 
-          <button
-            type="button"
-            className={`btn btn-light ${styles.uploadButton}`}
-            onClick={() => filesInputRef.current?.click()}
-            disabled={!attempt || progress !== null || !evidenceOpen}
-            title="Attempt-level evidence — the specimen before, the overall setup"
-          >
-            Upload Images
-          </button>
-          <button
-            type="button"
-            className={`btn btn-light ${styles.uploadButton}`}
-            onClick={() => folderInputRef.current?.click()}
-            disabled={!attempt || progress !== null || !evidenceOpen}
-          >
-            Upload Folder
-          </button>
-          <button
-            type="button"
-            className={`btn btn-outline-light ${styles.uploadButton}`}
-            onClick={() => setShowGallery(true)}
-            disabled={photoCount === 0}
-          >
-            Preview ({photoCount})
-          </button>
-        </div>
-
-        {progress !== null && (
-          <div className={`progress ${styles.progress}`}>
-            <div
-              className="progress-bar progress-bar-striped progress-bar-animated"
-              role="progressbar"
-              style={{ width: `${progress}%` }}
+            <button
+              type="button"
+              className={`btn btn-light ${styles.uploadButton}`}
+              onClick={() => filesInputRef.current?.click()}
+              disabled={!inProgress || progress !== null || !evidenceOpen}
+              title="Evidence for this impact's attempt - the specimen before, the overall setup"
             >
-              {progress}%
-            </div>
+              Upload Images
+            </button>
+            <button
+              type="button"
+              className={`btn btn-light ${styles.uploadButton}`}
+              onClick={() => folderInputRef.current?.click()}
+              disabled={!inProgress || progress !== null || !evidenceOpen}
+            >
+              Upload Folder
+            </button>
+            <button
+              type="button"
+              className={`btn btn-outline-light ${styles.uploadButton}`}
+              onClick={() => setShowGallery(true)}
+              disabled={photoCount === 0}
+            >
+              Preview ({photoCount})
+            </button>
           </div>
-        )}
 
-        {inProgress && (
-          <div className={styles.finishRow}>
+          {inProgress && (
             <button
               type="button"
               className={`btn btn-primary ${styles.finishButton}`}
               onClick={() => setShowFinish(true)}
               disabled={busy}
             >
-              Finish Attempt
+              {readyToComplete
+                ? `Complete impact ${attempt.trial_number}`
+                : `Finish impact ${attempt.trial_number}`}
             </button>
-          </div>
-        )}
+          )}
+        </div>
 
-        {message && (
-          <p
-            className={
-              message.tone === "error" ? styles.errorText : styles.successText
-            }
-          >
-            {message.text}
-          </p>
-        )}
+        {/* One reserved slot for the upload bar and the flash message, so
+            neither appearing changes the height of the card. */}
+        <div className={styles.messageSlot}>
+          {progress !== null ? (
+            <div className={`progress ${styles.progress}`}>
+              <div
+                className="progress-bar progress-bar-striped progress-bar-animated"
+                role="progressbar"
+                style={{ width: `${progress}%` }}
+              >
+                {progress}%
+              </div>
+            </div>
+          ) : message ? (
+            <p
+              className={
+                message.tone === "error" ? styles.errorText : styles.successText
+              }
+            >
+              {message.text}
+            </p>
+          ) : null}
+        </div>
       </div>
     </>
   );

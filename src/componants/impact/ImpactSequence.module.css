@@ -1,0 +1,198 @@
+/* Sits on the page's white ground, below the dark device card, so colours
+   follow the rest of the light UI rather than the panel it came out of. */
+.section {
+  margin-top: 1.25rem;
+}
+
+.heading {
+  margin: 0;
+}
+
+.count {
+  margin-right: 0.6rem;
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-variant-numeric: tabular-nums;
+}
+
+.tallyPass,
+.tallyFail {
+  margin-left: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.tallyPass {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.tallyFail {
+  background: #f8d7da;
+  color: #842029;
+}
+
+/* An impact test can hold any number of impacts, so they fill the width in a
+   grid instead of stacking one full-width row each down the page. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.impactCard {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid #dee2e6;
+  border-left-width: 3px;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 0.875rem;
+}
+
+.impactCard:hover {
+  background: #f8f9fa;
+}
+
+/* The pass/fail edge makes a long sequence scannable without reading it. */
+.cardPass {
+  border-left-color: #198754;
+}
+
+.cardFail {
+  border-left-color: #dc3545;
+}
+
+.cardOpen {
+  border-left-color: #ffc107;
+}
+
+.cardAborted {
+  border-left-color: #adb5bd;
+  background: #f8f9fa;
+  color: #6c757d;
+}
+
+/* The impact currently open, picked out of the sequence. */
+.cardCurrent {
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.35);
+}
+
+.number {
+  flex: 0 0 auto;
+  min-width: 1.6rem;
+  font-weight: 700;
+  color: #495057;
+  font-variant-numeric: tabular-nums;
+}
+
+.pass,
+.fail,
+.open,
+.aborted {
+  flex: 0 0 auto;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.pass {
+  color: #146c43;
+}
+
+.fail {
+  color: #b02a37;
+}
+
+.open {
+  color: #997404;
+}
+
+.aborted {
+  color: #6c757d;
+}
+
+.photos {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-size: 0.78rem;
+  color: #6c757d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.addPhoto {
+  flex: 0 0 auto;
+  border: 1px solid #adb5bd;
+  background: #fff;
+  color: #212529;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  padding: 0.16rem 0.5rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.addPhoto:hover:not(:disabled) {
+  background: #e9ecef;
+  border-color: #6c757d;
+}
+
+.addPhoto:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.empty {
+  margin: 0.75rem 0 0;
+  padding: 1.25rem 0;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.progress {
+  margin-top: 0.75rem;
+  height: 1.25rem;
+}
+
+/* Matches the error treatment the impact tests table uses. */
+.error {
+  position: relative;
+  margin-top: 0.75rem;
+  padding: 0.65rem 2rem 0.65rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #f5c2c7;
+  background: #f8d7da;
+  color: #842029;
+  font-size: 0.9rem;
+}
+
+.errorClose {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.4rem;
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: #842029;
+  cursor: pointer;
+}
+
+/* A correction supersedes a recorded result; the marker says so on hover. */
+.correctionMark {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  color: #0d6efd;
+  cursor: help;
+}

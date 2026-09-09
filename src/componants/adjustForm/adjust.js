@@ -13,6 +13,7 @@ import axios from "axios";
 import AddRowStaticPressureLoadingModal from "../Modals/AddRowStaticPressureLoadingModal";
 import AddRowCyclicPressureLoadingModal from "../Modals/AddRowCyclicPressureLoadingModal";
 import ImpactPanel from "../impact/ImpactPanel";
+import ImpactSequence from "../impact/ImpactSequence";
 import {
   impactError,
   listImpactTests,
@@ -44,6 +45,9 @@ const Adjust = (props) => {
   const [testIndex, setTestIndex] = useState(0);
   const [FinishModalVisible, setFinishModalVisible] = useState(false);
   const [impactAttempt, setImpactAttempt] = useState(null);
+  // Bumped whenever the panel changes an impact, so the sequence below the
+  // device card reloads. It owns the list; the panel owns the open impact.
+  const [impactRefresh, setImpactRefresh] = useState(0);
   const [impactStartError, setImpactStartError] = useState("");
   // A declared name, not a login. Remembered per device, as the API asks.
   const [operatorName, setOperatorName] = useState(
@@ -207,8 +211,16 @@ const Adjust = (props) => {
     setImpactAttempt(null);
   }, [isImpact, selectedTest]);
 
-  // Success/Fail closes the test, so hand the button back to "Start".
-  // The attempt is closed (completed or aborted) - hand the button back and
+  // One attempt is one impact, so an attempt opens and closes once per impact.
+  // Success/Fail opens one without going through Start (starting is idempotent
+  // on the backend), so the button has to follow the panel rather than lead it.
+  const handleImpactAttemptStarted = () => {
+    setButtonName("Emergency Stop");
+    setButtonClass("btn btn-danger btn-lg");
+    setImpactStartError("");
+  };
+
+  // The impact is closed (completed or aborted) - hand the button back and
   // refresh the list so the table and dropdown agree.
   const handleImpactAttemptClosed = () => {
     setButtonName("Start");
@@ -385,14 +397,15 @@ const Adjust = (props) => {
       const testId = selectedTest;
       if (!testId) return;
 
-      setButtonName("Emergency Stop");
-      setButtonClass("btn btn-danger btn-lg");
+      handleImpactAttemptStarted();
 
+      // Idempotent on the backend: an open attempt is returned, not duplicated,
+      // so a double-press cannot produce two impacts.
       startImpactAttempt(props.projectID, testId, operatorName || null)
         .then((attempt) => {
           setImpactAttempt(attempt);
           setImpactStartError("");
-          loadImpactTests(); // so the table shows the attempt straight away
+          loadImpactTests(); // so the table shows the impact straight away
         })
         .catch((error) => {
           // e.g. an attempt on a test already marked finished.
@@ -870,8 +883,26 @@ const Adjust = (props) => {
       />
       <HookMqtt ref={ref3} topics={[]} />
       <div className="col-8">
-        <div className="card text-white bg-dark">
-          <div className="card-body">
+        {/* h-100: the row is a flex container, so this column already stretches
+            to the taller of itself and the Status column - but the card inside
+            it did not, and stopped short whenever Status was taller (Cyclic
+            Load, say). Filling the column makes the two sides end level in
+            every load type. */}
+        <div
+          className="card text-white bg-dark h-100"
+          /* The load types do not have the same amount of content - Impact
+             hides the frequency slider and the current-speed readout, which
+             made its card ~39px shorter than Static and Cyclic (392 vs 431
+             measured). A floor at the tallest keeps the black area identical
+             in every load type, so switching type does not resize it. Raise
+             this if a taller control set is added. */
+          style={{ minHeight: "27rem" }}
+        >
+          <div
+            className={`card-body device-card-body d-flex flex-column${
+              isImpact ? " device-card-body--impact" : ""
+            }`}
+          >
             {/* Impact runs no motor, so the frequency slider,
                 current-speed readout and their rule are hidden for it. */}
             {!isImpact && (
@@ -1040,17 +1071,42 @@ const Adjust = (props) => {
                   <p className="text-danger mt-2 mb-0">{impactStartError}</p>
                 )}
                 <ImpactPanel
+                  projectId={props.projectID}
+                  testId={selectedTest}
                   attempt={impactAttempt}
                   setAttempt={setImpactAttempt}
                   operatorName={operatorName}
                   setOperatorName={setOperatorName}
+                  onAttemptStarted={handleImpactAttemptStarted}
                   onAttemptClosed={handleImpactAttemptClosed}
+                  onChanged={() => setImpactRefresh((n) => n + 1)}
                 />
               </>
             )}
           </div>
         </div>
+
       </div>
+
+      {/* The impact sequence is a record of the test rather than a rig control,
+          so it sits on the page's white ground below the device card, full
+          width.
+
+          `order-last` is load-bearing. Adjust renders before Status inside the
+          shared row, so without it this col-12 sits between the col-8 card and
+          Status's col-4 and pushes Status onto a third line. The row is a flex
+          container, so ordering it last puts the card and Status back on one
+          line with the sequence beneath both. */}
+      {isImpact && (
+        <div className="col-12 order-last">
+          <ImpactSequence
+            projectId={props.projectID}
+            testId={selectedTest}
+            attempt={impactAttempt}
+            refreshToken={impactRefresh}
+          />
+        </div>
+      )}
     </>
   );
 };

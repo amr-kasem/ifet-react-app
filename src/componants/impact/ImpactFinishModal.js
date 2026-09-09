@@ -9,16 +9,23 @@ const ABORT_REASONS = [
   "Environmental",
 ];
 
+// ONE ATTEMPT IS ONE IMPACT, so this closes one impact rather than a sequence.
+//
+// There is deliberately no "did the specimen resist?" question any more. The
+// attempt's outcome IS its impact's outcome — the backend derives it from the
+// shot at finish — so asking again could only produce a contradiction: a Fail
+// impact inside an attempt the operator marked as resisted. The result was
+// meaningful when an attempt summarised several impacts; it no longer is.
 const ImpactFinishModal = ({
   visible,
-  shots,
+  impactNumber,
+  shot,
   photoCount,
   busy,
   onCancel,
   onSubmit,
 }) => {
   const [mode, setMode] = useState("complete"); // complete | abort
-  const [result, setResult] = useState(null); // the operator's call
   const [note, setNote] = useState("");
   const [testingContinued, setTestingContinued] = useState("Stopped");
   const [abortReason, setAbortReason] = useState(ABORT_REASONS[0]);
@@ -29,23 +36,20 @@ const ImpactFinishModal = ({
     setNote("");
     setTestingContinued("Stopped");
     setAbortReason(ABORT_REASONS[0]);
-    // Deliberately no default: missing data is never a pass, so the operator
-    // has to say which it was.
-    setResult(null);
   }, [visible]);
 
   if (!visible) return null;
 
-  const failed = shots.filter((s) => !s.result).length;
-  const canComplete = result !== null && shots.length > 0 && photoCount > 0;
+  // Exactly one impact and at least one photograph — the backend's two gates.
+  const canComplete = !!shot && photoCount > 0;
 
   const submit = () => {
     if (mode === "abort") {
       onSubmit({ abort_reason: abortReason, note: note || null });
       return;
     }
+    // No `result`: the outcome comes from the impact itself.
     onSubmit({
-      result,
       note: note || null,
       testing_continued: testingContinued,
     });
@@ -57,15 +61,16 @@ const ImpactFinishModal = ({
       onClick={(e) => e.target === e.currentTarget && onCancel()}
     >
       <div className={styles.content}>
-        <h3 className={styles.title}>Finish Attempt</h3>
+        <h3 className={styles.title}>
+          {mode === "abort" ? "Abort" : "Complete"} impact {impactNumber}
+        </h3>
 
         <div className={styles.summary}>
-          <span>
-            <strong>{shots.length}</strong>{" "}
-            {shots.length === 1 ? "impact" : "impacts"} recorded
-          </span>
-          <span className={failed > 0 ? styles.summaryFail : undefined}>
-            <strong>{failed}</strong> failed
+          <span className={!shot ? styles.summaryFail : undefined}>
+            <strong>
+              {shot ? (shot.result ? "Pass" : "Fail") : "no impact"}
+            </strong>{" "}
+            recorded
           </span>
           <span className={photoCount === 0 ? styles.summaryFail : undefined}>
             <strong>{photoCount}</strong>{" "}
@@ -92,25 +97,13 @@ const ImpactFinishModal = ({
 
         {mode === "complete" ? (
           <>
-            <p className={styles.question}>Did the specimen resist?</p>
-            <div className={styles.resultRow}>
-              <button
-                type="button"
-                className={
-                  result === true ? styles.resistedOn : styles.resistedOff
-                }
-                onClick={() => setResult(true)}
-              >
-                It resisted
-              </button>
-              <button
-                type="button"
-                className={result === false ? styles.failedOn : styles.failedOff}
-                onClick={() => setResult(false)}
-              >
-                It did not
-              </button>
-            </div>
+            <p className={styles.question}>
+              This impact is recorded as{" "}
+              <strong>
+                {shot ? (shot.result ? "Pass" : "Fail") : "nothing yet"}
+              </strong>
+              . That is the attempt's result — it is not asked again.
+            </p>
 
             <label className={styles.label} htmlFor="impact_continued">
               Testing continued
@@ -127,11 +120,9 @@ const ImpactFinishModal = ({
 
             {!canComplete && (
               <p className={styles.blocked}>
-                {shots.length === 0
-                  ? "Record at least one impact before finishing."
-                  : photoCount === 0
-                  ? "At least one photograph is required before finishing."
-                  : "Choose whether the specimen resisted."}
+                {!shot
+                  ? "Record the impact with Success or Fail before completing it."
+                  : "At least one photograph is required before completing."}
               </p>
             )}
           </>
@@ -153,7 +144,7 @@ const ImpactFinishModal = ({
               ))}
             </select>
             <p className={styles.aside}>
-              An aborted attempt is kept and needs no impacts or photographs.
+              An aborted attempt is kept and needs no impact or photograph.
             </p>
           </>
         )}
@@ -170,8 +161,9 @@ const ImpactFinishModal = ({
         />
 
         <p className={styles.aside}>
-          The reviewer decides Pass / Fail afterwards. This attempt stays
-          <strong> Pending</strong> review until then.
+          The reviewer decides Pass / Fail afterwards. This impact stays
+          <strong> Pending</strong> review until then. A mis-recorded result
+          cannot be edited — it is superseded by a correction.
         </p>
 
         <div className={styles.buttons}>
@@ -184,7 +176,7 @@ const ImpactFinishModal = ({
             onClick={submit}
             disabled={busy || (mode === "complete" && !canComplete)}
           >
-            {mode === "abort" ? "Abort Attempt" : "Complete Attempt"}
+            {mode === "abort" ? "Abort Impact" : "Complete Impact"}
           </button>
         </div>
       </div>
