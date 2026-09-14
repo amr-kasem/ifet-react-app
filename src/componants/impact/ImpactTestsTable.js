@@ -109,9 +109,16 @@ const ImpactTestsTable = ({ projectID, neededDevice, status }) => {
 
       <ConfirmationModal
         visible={pendingFinish !== null}
-        title="Finish Impact Test"
-        message="Mark this impact test as finished? No further attempts can be started on it."
-        confirmText="Finish"
+        title="Finish the whole impact test"
+        message={
+          pendingFinish
+            ? `Close impact test ${pendingFinish.id} to further impacts? ` +
+              `It has ${(pendingFinish.trials || []).length} so far. ` +
+              "This is not the same as completing one impact - after this, " +
+              "starting another impact on it is refused."
+            : ""
+        }
+        confirmText="Finish test"
         cancelText="Cancel"
         onCancel={() => setPendingFinish(null)}
         onConfirm={handleFinishConfirm}
@@ -169,6 +176,12 @@ const ImpactTestsTable = ({ projectID, neededDevice, status }) => {
                   <th style={{ width: "90px" }}>
                     <h6>Weight</h6>
                   </th>
+                  <th style={{ width: "120px" }}>
+                    <h6>Classification</h6>
+                  </th>
+                  <th style={{ width: "100px" }}>
+                    <h6>Target ft/s</h6>
+                  </th>
                   <th style={{ width: "80px" }}>
                     <h6>Attempts</h6>
                   </th>
@@ -184,15 +197,15 @@ const ImpactTestsTable = ({ projectID, neededDevice, status }) => {
                   <th style={{ width: "80px" }}>
                     <h6>History</h6>
                   </th>
-                  <th style={{ width: "90px" }}>
-                    <h6>Mark as finished</h6>
+                  <th style={{ width: "110px" }}>
+                    <h6>Close test</h6>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {tests.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className={styles.emptyRow}>
+                    <td colSpan="11" className={styles.emptyRow}>
                       {projectID
                         ? "No impact tests on this project yet."
                         : "Select a project to see its impact tests."}
@@ -205,6 +218,19 @@ const ImpactTestsTable = ({ projectID, neededDevice, status }) => {
                       <td>{test.id}</td>
                       <td className={styles.wrapCell}>{orDash(test.missile)}</td>
                       <td>{orDash(test.missile_weight)}</td>
+                      {/* Derived by the API from the family and level. Never
+                          computed here. */}
+                      <td
+                        className={
+                          test.impact_classification
+                            ? undefined
+                            : styles.verdictPending
+                        }
+                      >
+                        {test.impact_classification || "unclassified"}
+                      </td>
+                      {/* The TEST's target velocity, not a shot's achieved one. */}
+                      <td>{orDash(test.target_velocity)}</td>
                       <td>
                         {/* A test with no attempts is normal: created, not started. */}
                         {(test.trials || []).length}
@@ -240,8 +266,9 @@ const ImpactTestsTable = ({ projectID, neededDevice, status }) => {
                           className="btn btn-sm btn-success"
                           onClick={() => setPendingFinish(test)}
                           disabled={test.finished || status !== "idle"}
+                          title="Closes the whole test to further impacts. Completing one impact is done in the panel above."
                         >
-                          {test.finished ? "Done" : "Finish"}
+                          {test.finished ? "Closed" : "Finish test"}
                         </button>
                       </td>
                     </tr>

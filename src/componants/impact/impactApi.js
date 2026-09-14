@@ -67,6 +67,110 @@ export const createImpactTest = async (projectId, body = {}) => {
   return data;
 };
 
+// --- the test's own classification (TC5) ---------------------------------
+//
+// The vocabularies, mirrored from the API's IMPACT_FAMILIES / IMPACT_LEVELS.
+// Anything else is refused with 422.
+export const IMPACT_FAMILIES = ["SMI", "LMI"];
+export const IMPACT_LEVELS = ["D", "E"];
+
+// An imported test is bound to an Airtable Protocol Section, and its family is
+// that section's Requirement Code (IMPACT_SMI / IMPACT_LMI), frozen at import.
+// PATCHing the family on one is a 400 - so never offer the choice.
+export const isAirtableBound = (test) => !!test?.airtable_section_id;
+
+// `impact_classification` is DERIVED on the server - "SMI", "LMI Level D",
+// "LMI Level E", or null when the family (or an LMI level) is missing. Render
+// it; never compute it and never send it.
+export const impactClassification = (test) => test?.impact_classification || null;
+
+// Family: write-once, and only ever on a LabOS-only test. Any attempt at all,
+// aborted included, fixes it - it is the context that attempt ran in.
+export const familyIsLocked = (test) =>
+  isAirtableBound(test) || (test?.trials || []).length > 0;
+
+// **The family locks at the first ATTEMPT; the classification is only demanded
+// when one COMPLETES.** Starting without a family used to land between those
+// two deadlines with no way forward - PATCH 409, finish 400, abort the only
+// exit. The API now closes that by refusing the start itself, for ANY impact
+// test, bound or not. Mirrored here so the operator is stopped at the button
+// rather than by a 400.
+export const familyUnset = (test) => !!test && !test.impact_family;
+
+// Bound to Airtable but unclassified: the import that owns the family did not
+// supply one, so it cannot be chosen here - the requirement has to be re-run.
+export const familyNeedsReimport = (test) =>
+  familyUnset(test) && isAirtableBound(test);
+
+// Unbound, unclassified, and attempts already exist: it can never acquire a
+// family now, so its impacts can only be aborted. Only reachable on tests made
+// before the API's start guard existed.
+export const familyStranded = (test) =>
+  familyUnset(test) && !isAirtableBound(test) && (test?.trials || []).length > 0;
+
+// Why the screen refuses to start an impact, in the API's own terms - or null
+// when nothing is in the way.
+//
+// `attemptOpen` matters: the API skips its guard while an attempt is open, so
+// that a test stranded by the old behaviour still answers Start with that
+// attempt. It is the id the operator needs in order to abort it.
+export const impactStartBlock = (test, attemptOpen) => {
+  if (!test || attemptOpen || !familyUnset(test)) return null;
+  if (familyNeedsReimport(test)) {
+    return (
+      `This test is bound to Airtable section ${test.airtable_section_id} but ` +
+      "carries no missile family. Re-run the requirement import before starting."
+    );
+  }
+  if (familyStranded(test)) {
+    return (
+      "This test has impacts but no missile family, and can no longer be given " +
+      "one - its impacts can only be aborted. Create a new test."
+    );
+  }
+  return (
+    "Set the missile family below before the first impact. An attempt fixes it " +
+    "permanently, so the API refuses to start without one."
+  );
+};
+
+// Level and target velocity stay editable until an attempt COMPLETES, because
+// until then nothing has been claimed.
+export const levelAndVelocityAreLocked = (test) =>
+  (test?.trials || []).some((t) => t.status === "Completed");
+
+// Set the classification and the target velocity. Unknown keys are 422, so
+// only send what changed.
+export const updateImpactTest = async (projectId, testId, body) => {
+  const { data } = await axios.patch(
+    `${impactApiBase()}/projects/${projectId}/impact-tests/${testId}`,
+    body,
+    json
+  );
+  return data;
+};
+
+// What `PUT /test-results/{aid}/finish` will refuse for lack of test setup.
+// The API is the authority; this only lets the screen say so before the call.
+export const impactSetupMissing = (test) => {
+  const missing = [];
+  if (!test) return missing;
+  if (!test.impact_classification) {
+    missing.push(
+      test.impact_family === "LMI"
+        ? "the impact level (D or E)"
+        : "the impact family"
+    );
+  }
+  if (test.target_velocity === null || test.target_velocity === undefined) {
+    missing.push("the target velocity");
+  }
+  return missing;
+};
+
+// Closes the TEST to further impacts. Not the same operation as finishing one
+// impact (PUT /test-results/{aid}/finish) - after this, starting an attempt is
+// a 400, so the two must never share the word "Finish" in the UI.
 export const finishImpactTest = async (projectId, testId) => {
   const { data } = await axios.put(
     `${impactApiBase()}/projects/${projectId}/impact-tests/${testId}/finish`
@@ -147,6 +251,10 @@ export const setVerdict = async (attemptId, body) => {
 //
 // shot_number is allocated server-side — never send one. It now mirrors the
 // attempt's trial_number, so the impact ordinal and the attempt ordinal agree.
+//
+// `velocity` here is the ACHIEVED velocity of this one impact, and it is not
+// the test's `target_velocity`. Different fields, different meanings - they
+// must not share a control.
 export const recordShot = async (attemptId, { result, area, velocity, note }) => {
   const num = (v) => (v === undefined || v === null || v === "" ? null : Number(v));
   const { data } = await axios.post(

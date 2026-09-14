@@ -1,0 +1,220 @@
+/* The selected impact test's own values, on the page's white ground beside
+   the impact sequence. Matches ImpactSequence's treatment. */
+.section {
+  margin-top: 1.25rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.heading {
+  margin: 0;
+}
+
+.testName {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+/* Derived by the API. Rendered here, never computed. */
+.classification {
+  margin-left: auto;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: #cfe2ff;
+  color: #084298;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.classificationMissing {
+  margin-left: auto;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: #fff3cd;
+  color: #664d03;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.1rem;
+  margin-top: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e4e7eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a94a6;
+  white-space: nowrap;
+}
+
+.required {
+  margin-left: 0.3rem;
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  background: #f8d7da;
+  color: #842029;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+}
+
+.unit {
+  margin-left: 0.25rem;
+  font-weight: 600;
+  color: #adb5bd;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* A value Airtable owns: shown, never offered as a choice. */
+.readOnly {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 0.85rem;
+  border: 1px dashed #ced4da;
+  border-radius: 7px;
+  background: #f8f9fa;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #212529;
+}
+
+.readOnlyNote {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #8a94a6;
+  white-space: nowrap;
+}
+
+.choice {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.choiceOn,
+.choiceOff {
+  min-width: 58px;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.choiceOn {
+  border: 1px solid #0d6efd;
+  background: #0d6efd;
+  color: #fff;
+}
+
+.choiceOff {
+  border: 1px solid #ced4da;
+  background: #fff;
+  color: #495057;
+}
+
+.choiceOff:hover:not(:disabled) {
+  border-color: #6c757d;
+  background: #f1f3f5;
+}
+
+.choiceOn:disabled,
+.choiceOff:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.velocity {
+  min-height: 44px;
+  max-width: 150px;
+  font-size: 1rem;
+}
+
+.actions {
+  margin-left: auto;
+}
+
+.needs {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 7px;
+  border: 1px solid #ffe69c;
+  background: #fff3cd;
+  color: #664d03;
+  font-size: 0.88rem;
+}
+
+.locked {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.saved {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  color: #0f5132;
+  font-weight: 600;
+}
+
+.error {
+  position: relative;
+  margin-top: 0.6rem;
+  padding: 0.65rem 2rem 0.65rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #f5c2c7;
+  background: #f8d7da;
+  color: #842029;
+  font-size: 0.9rem;
+}
+
+.errorClose {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.4rem;
+  background: transparent;
+  border: none;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: #842029;
+  cursor: pointer;
+}
+
+/* No family and attempts already exist: the test can never be classified, so
+   every impact on it can only be aborted. */
+.stranded {
+  margin: 0.6rem 0 0;
+  padding: 0.6rem 0.85rem;
+  border-radius: 7px;
+  border: 1px solid #f5c2c7;
+  background: #f8d7da;
+  color: #842029;
+  font-size: 0.88rem;
+}

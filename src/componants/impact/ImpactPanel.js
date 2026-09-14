@@ -3,8 +3,11 @@ import ImpactFinishModal from "./ImpactFinishModal";
 import ImpactPhotosModal from "./ImpactPhotosModal";
 import styles from "./ImpactPanel.module.css";
 import {
+  familyUnset,
   finishAttempt,
   impactError,
+  impactSetupMissing,
+  impactStartBlock,
   listShots,
   recordShot,
   startImpactAttempt,
@@ -21,6 +24,7 @@ import {
 const ImpactPanel = ({
   projectId,
   testId,
+  test,
   attempt,
   setAttempt,
   operatorName,
@@ -89,9 +93,27 @@ const ImpactPanel = ({
     attemptPhotos.length +
     shots.reduce((n, s) => n + (s.photos?.length || 0), 0);
 
+  // A completed impact records the classification and target velocity it ran
+  // under, so the finish gate gets those too - not just the impact and a
+  // photograph. An abort needs none of them.
+  const setupMissing = impactSetupMissing(test);
+
+  // The API refuses POST /trials without a family, for any impact test. The
+  // same refusal here stops the operator at the button. null when nothing is
+  // in the way.
+  const startBlock = impactStartBlock(test, inProgress);
+
+  // An impact that is already open on an unclassified test can never be
+  // completed - only aborted - and the API leaves it startable for exactly
+  // that reason.
+  const openButUnclassifiable = inProgress && familyUnset(test);
+
   const needsImpact = inProgress && !currentShot;
   const needsPhoto = inProgress && currentShot && photoCount === 0;
-  const readyToComplete = inProgress && currentShot && photoCount > 0;
+  const needsSetup =
+    inProgress && currentShot && photoCount > 0 && setupMissing.length > 0;
+  const readyToComplete =
+    inProgress && currentShot && photoCount > 0 && setupMissing.length === 0;
 
   // Success / Fail records THIS attempt's impact. Starting is idempotent on the
   // backend - an open attempt is returned, not duplicated - so pressing either
@@ -229,6 +251,7 @@ const ImpactPanel = ({
         impactNumber={attempt?.trial_number}
         shot={currentShot}
         photoCount={photoCount}
+        setupMissing={setupMissing}
         busy={busy}
         onCancel={() => setShowFinish(false)}
         onSubmit={handleFinish}
@@ -269,7 +292,7 @@ const ImpactPanel = ({
             type="button"
             className={`btn btn-success btn-lg ${styles.resultButton}`}
             onClick={() => handleRecordImpact(true)}
-            disabled={!testId || busy || !!currentShot}
+            disabled={!testId || busy || !!currentShot || !!startBlock}
           >
             Success
           </button>
@@ -277,7 +300,7 @@ const ImpactPanel = ({
             type="button"
             className={`btn btn-danger btn-lg ${styles.resultButton}`}
             onClick={() => handleRecordImpact(false)}
-            disabled={!testId || busy || !!currentShot}
+            disabled={!testId || busy || !!currentShot || !!startBlock}
           >
             Fail
           </button>
@@ -286,6 +309,10 @@ const ImpactPanel = ({
         <p className={styles.hint}>
           {!testId
             ? "Select an impact test to begin."
+            : startBlock
+            ? startBlock
+            : openButUnclassifiable
+            ? "This impact has no classification, so it cannot be completed - abort it, then classify the test."
             : currentShot
             ? "One attempt is one impact. Complete this one to record the next."
             : "Each press records one impact and opens its attempt."}
@@ -324,6 +351,8 @@ const ImpactPanel = ({
                   ? "Press Success or Fail."
                   : needsPhoto
                   ? "At least one photograph is required."
+                  : needsSetup
+                  ? `Set ${setupMissing.join(" and ")} on the test below.`
                   : `${photoCount} photograph${
                       photoCount === 1 ? "" : "s"
                     } - ready.`}

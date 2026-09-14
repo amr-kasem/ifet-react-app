@@ -21,6 +21,9 @@ const ImpactFinishModal = ({
   impactNumber,
   shot,
   photoCount,
+  // What the TEST is still missing: its classification, its target velocity.
+  // A completed impact records what it ran under; an abort does not.
+  setupMissing = [],
   busy,
   onCancel,
   onSubmit,
@@ -40,8 +43,9 @@ const ImpactFinishModal = ({
 
   if (!visible) return null;
 
-  // Exactly one impact and at least one photograph — the backend's two gates.
-  const canComplete = !!shot && photoCount > 0;
+  // The backend's gates, in the order it checks them: exactly one impact, at
+  // least one photograph, a resolvable classification, and a target velocity.
+  const canComplete = !!shot && photoCount > 0 && setupMissing.length === 0;
 
   const submit = () => {
     if (mode === "abort") {
@@ -122,7 +126,11 @@ const ImpactFinishModal = ({
               <p className={styles.blocked}>
                 {!shot
                   ? "Record the impact with Success or Fail before completing it."
-                  : "At least one photograph is required before completing."}
+                  : photoCount === 0
+                  ? "At least one photograph is required before completing."
+                  : `Set ${setupMissing.join(
+                      " and "
+                    )} on the test before completing this impact. Aborting needs neither.`}
               </p>
             )}
           </>

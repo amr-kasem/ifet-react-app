@@ -14,6 +14,7 @@ import AddRowStaticPressureLoadingModal from "../Modals/AddRowStaticPressureLoad
 import AddRowCyclicPressureLoadingModal from "../Modals/AddRowCyclicPressureLoadingModal";
 import ImpactPanel from "../impact/ImpactPanel";
 import ImpactSequence from "../impact/ImpactSequence";
+import ImpactTestSetup from "../impact/ImpactTestSetup";
 import {
   impactError,
   listImpactTests,
@@ -188,6 +189,14 @@ const Adjust = (props) => {
 
   let toggleState = neededDevice.toggle;
   const isImpact = toggleState === "impact";
+
+  // The selected test object, not just its id: its classification and target
+  // velocity are what the impact finish gate checks, so the panel and the
+  // setup block both need the whole row.
+  const selectedImpactTest =
+    (neededDevice.impactRows || []).find(
+      (t) => String(t.id) === String(selectedTest)
+    ) || null;
 
   // Impact tests come from the impact API (the simulation in sync_test_api.py
   // for now), not from the project payload the other modes use.
@@ -1077,9 +1086,13 @@ const Adjust = (props) => {
                   setAttempt={setImpactAttempt}
                   operatorName={operatorName}
                   setOperatorName={setOperatorName}
+                  test={selectedImpactTest}
                   onAttemptStarted={handleImpactAttemptStarted}
                   onAttemptClosed={handleImpactAttemptClosed}
-                  onChanged={() => setImpactRefresh((n) => n + 1)}
+                  onChanged={() => {
+                    setImpactRefresh((n) => n + 1);
+                    loadImpactTests();
+                  }}
                 />
               </>
             )}
@@ -1099,6 +1112,17 @@ const Adjust = (props) => {
           line with the sequence beneath both. */}
       {isImpact && (
         <div className="col-12 order-last">
+          {/* The test's own values - classification and target velocity - are
+              set before the first impact is completed, so they sit above the
+              sequence rather than inside the per-impact panel. */}
+          <ImpactTestSetup
+            projectId={props.projectID}
+            test={selectedImpactTest}
+            onChanged={() => {
+              loadImpactTests();
+              setImpactRefresh((n) => n + 1);
+            }}
+          />
           <ImpactSequence
             projectId={props.projectID}
             testId={selectedTest}
