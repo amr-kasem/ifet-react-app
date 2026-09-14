@@ -1,6 +1,23 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+// WHERE THE BOOTSTRAP CONFIG COMES FROM - read this before switching a line.
+//
+// `window.location.host` carries the port ONLY when it is not the default, so
+// on the rig - where the app is served on port 80 - `host` and `hostname` are
+// the same string and this resolves to exactly what the old `hostname` line
+// resolved to. On a dev server at :3000 it stays same-origin instead of
+// silently asking port 80, which is cross-origin and blocked: the web root
+// serving these files sends no CORS headers.
+//
+// So `host` is correct in both places and `hostname` is correct in only one.
+// That is why it is the active line, and why it no longer has to be toggled
+// before a push.
+//
+// The dev server serves these three files from `public/`, which is gitignored -
+// they are a local convenience and must never ship inside the bundle, or a
+// stale copy would shadow the real one at the web root.
+//
 // Async thunk for fetching the initial device data
 export const fetchDeviceData = createAsyncThunk(
   "devices/fetchDeviceData",

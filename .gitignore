@@ -33,5 +33,17 @@ __pycache__/
 uploads/
 uploaded_images/
 
-# local reference copy of the backend's internal API docs - not ours to publish
+# local reference copies of the backend's internal docs - not ours to publish
 real_backend/
+MANUAL_TESTS_API.md
+tc5-ui-developer-handoff-*.md
+
+# editor / tooling
+.claude/
+
+# The bootstrap config belongs to the web root, never to the bundle. The dev
+# server borrows it via src/setupProxy.js; a copy left in public/ would be
+# copied into build/ and shadow the real one on the rig.
+/public/config.json
+/public/configCommonValves.json
+/public/configCommonSensors.json
