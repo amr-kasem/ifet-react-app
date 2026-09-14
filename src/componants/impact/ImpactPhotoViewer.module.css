@@ -1,0 +1,204 @@
+/* Impact evidence: thumbnails inside the attempts table, and a full-size
+   viewer over it. */
+
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: center;
+}
+
+.thumbButton {
+  padding: 0;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: #fff;
+  line-height: 0;
+  cursor: zoom-in;
+  overflow: hidden;
+  transition: border-color 0.12s ease, transform 0.12s ease;
+}
+
+.thumbButton:hover {
+  border-color: #0d6efd;
+  transform: scale(1.05);
+}
+
+.thumb {
+  display: block;
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+}
+
+/* No location from the API: name the evidence rather than show a broken image. */
+.stub {
+  max-width: 150px;
+  padding: 0.2rem 0.5rem;
+  border: 1px dashed #adb5bd;
+  border-radius: 6px;
+  background: #f8f9fa;
+  color: #495057;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: help;
+}
+
+.muted {
+  color: #6c757d;
+}
+
+/* --- the viewer ---------------------------------------------------------- */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* above ImpactAttemptsModal (1500) and ImageModal (2000). */
+  z-index: 2400;
+  padding: 2rem;
+}
+
+.viewer {
+  display: flex;
+  flex-direction: column;
+  width: min(1100px, 94vw);
+  max-height: 92vh;
+  background: #14181f;
+  color: #f1f3f5;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+}
+
+.viewerBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  background: #1d232d;
+  border-bottom: 1px solid #2b3340;
+}
+
+.viewerTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.counter {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  color: #9aa4b2;
+  font-variant-numeric: tabular-nums;
+}
+
+.close {
+  flex: 0 0 auto;
+  border: none;
+  background: transparent;
+  color: #dee2e6;
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0 0.2rem;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: #fff;
+}
+
+.stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  background: #0d1117;
+}
+
+.full {
+  max-width: 100%;
+  max-height: 74vh;
+  object-fit: contain;
+}
+
+.unavailable {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 32rem;
+  padding: 2rem;
+  text-align: center;
+  color: #c9d1d9;
+  font-size: 0.92rem;
+}
+
+.nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.6rem;
+  height: 2.6rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.nav:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.prev {
+  left: 0.6rem;
+}
+
+.next {
+  right: 0.6rem;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.6rem 0.9rem;
+  background: #1d232d;
+  border-top: 1px solid #2b3340;
+  font-size: 0.85rem;
+}
+
+.note {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: #dee2e6;
+}
+
+.when {
+  flex: 0 0 auto;
+  color: #9aa4b2;
+  font-variant-numeric: tabular-nums;
+}
+
+.openOriginal {
+  flex: 0 0 auto;
+  color: #79b8ff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.openOriginal:hover {
+  text-decoration: underline;
+}

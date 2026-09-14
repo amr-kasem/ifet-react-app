@@ -1,41 +1,10 @@
 import React, { useState } from "react";
-import ImageModal from "../Modals/ImageModal";
+import ImpactPhotoViewer from "./ImpactPhotoViewer";
 import styles from "./ImpactAttemptsModal.module.css";
-import {
-  correctAttempt,
-  impactError,
-  impactPhotoUrl,
-  listShots,
-} from "./impactApi";
+import { correctAttempt, impactError, listShots } from "./impactApi";
 
 const orDash = (value) =>
   value === null || value === undefined || value === "" ? "—" : value;
-
-// A photograph tile. The API exposes no URL for stored photographs yet, so
-// when impactPhotoUrl returns null the tile names the evidence instead of
-// rendering a broken image.
-const PhotoTile = ({ photo, onOpen }) => {
-  const url = impactPhotoUrl(photo);
-  const label = photo.note || photo.filename || `photo ${photo.id}`;
-
-  if (!url) {
-    return (
-      <span className={styles.photoStub} title={label}>
-        {label}
-      </span>
-    );
-  }
-
-  return (
-    <img
-      src={url}
-      alt={label}
-      title={label}
-      className={styles.thumb}
-      onClick={() => onOpen(photo)}
-    />
-  );
-};
 
 // ONE ATTEMPT IS ONE IMPACT, so this list is the test's impact sequence:
 // attempt N is impact N. Attempts recorded before that change can still hold
@@ -51,7 +20,6 @@ const ImpactAttemptsModal = ({
   const [shotsByAttempt, setShotsByAttempt] = useState({});
   const [loadingId, setLoadingId] = useState(null);
   const [error, setError] = useState("");
-  const [fullPhoto, setFullPhoto] = useState(null);
   const [correcting, setCorrecting] = useState(null); // attempt being corrected
   const [reason, setReason] = useState("");
   const [correctBusy, setCorrectBusy] = useState(false);
@@ -290,21 +258,9 @@ const ImpactAttemptsModal = ({
                                           {orDash(shot.note)}
                                         </td>
                                         <td>
-                                          {(shot.photos || []).length === 0 ? (
-                                            <span className={styles.muted}>
-                                              none
-                                            </span>
-                                          ) : (
-                                            <div className={styles.thumbs}>
-                                              {shot.photos.map((photo) => (
-                                                <PhotoTile
-                                                  key={photo.id}
-                                                  photo={photo}
-                                                  onOpen={setFullPhoto}
-                                                />
-                                              ))}
-                                            </div>
-                                          )}
+                                          <ImpactPhotoViewer
+                                            photos={shot.photos || []}
+                                          />
                                         </td>
                                       </tr>
                                     ))}
@@ -317,23 +273,11 @@ const ImpactAttemptsModal = ({
                                 <span className={styles.attemptPhotosLabel}>
                                   Attempt photographs
                                 </span>
-                                {(attempt.photos || []).filter(
-                                  (p) => p.shot_id == null
-                                ).length === 0 ? (
-                                  <span className={styles.muted}>none</span>
-                                ) : (
-                                  <div className={styles.thumbs}>
-                                    {(attempt.photos || [])
-                                      .filter((p) => p.shot_id == null)
-                                      .map((photo) => (
-                                        <PhotoTile
-                                          key={photo.id}
-                                          photo={photo}
-                                          onOpen={setFullPhoto}
-                                        />
-                                      ))}
-                                  </div>
-                                )}
+                                <ImpactPhotoViewer
+                                  photos={(attempt.photos || []).filter(
+                                    (p) => p.shot_id == null
+                                  )}
+                                />
                               </div>
 
                               {attempt.corrects_attempt_id && (
@@ -407,13 +351,6 @@ const ImpactAttemptsModal = ({
           </p>
         </div>
       </div>
-
-      <ImageModal
-        isOpen={fullPhoto !== null}
-        onClose={() => setFullPhoto(null)}
-        imageSrc={fullPhoto ? impactPhotoUrl(fullPhoto) || "" : ""}
-        altText={fullPhoto?.filename || "Impact photograph"}
-      />
     </>
   );
 };
